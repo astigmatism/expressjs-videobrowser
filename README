@@ -1,0 +1,8 @@
+expressjs-romsort
+=====
+
+This project was designed to watch a folder of videos, create thumbnails for them and allow you browse and view them
+
+requirements
+__________________
+- brew install imagemagick --with-webp
