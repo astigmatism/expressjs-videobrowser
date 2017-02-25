@@ -48,11 +48,11 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
                         return nextitem();
                     }
 
-                    destinationPath = path.join(destinationPath, item);
+                    var destinationFolder = path.join(destinationPath, item);
                     var sourceFile = path.join(sourceRoot, currentPath, item);
 
                     //if destination folder exists, do we need to override it?
-                    that.handleDestination(destinationPath, override, (err, perform) => {
+                    that.handleDestination(destinationFolder, override, (err, perform) => {
                         if (err) {
                             return nextitem(err);
                         }
@@ -61,7 +61,7 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
 
                             console.log('Working: ' + sourceFile);
 
-                            var command = 'ffmpeg -i "' + sourceFile + '" -vf fps=1/5 "' + path.join(destinationPath, '%d.png') + '"';
+                            var command = 'ffmpeg -i "' + sourceFile + '" -vf fps=1/5 "' + path.join(destinationFolder, '%d.png') + '"';
                             
                             exec(command, (err, stdout, stderr) => {
                                 if (err) {
