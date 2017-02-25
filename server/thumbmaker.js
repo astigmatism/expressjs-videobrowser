@@ -12,8 +12,10 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
 
     var that = this;
 
+    var sourceFolder = path.join(sourceRoot, currentPath);
+
     //get contents of folder to analyze
-    fs.readdir(path.join(sourceRoot, currentPath), function(err, items) {
+    fs.readdir(sourceFolder, function(err, items) {
         if (err) {
             return callback(err);
         }
@@ -21,6 +23,9 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
         //to mark folders, preceed them with a dot
         var destinationPath = path.join(destinationRoot, '.' + currentPath);
         
+
+        //that.syncfolders()
+
         //ensure a thumbnail destination exists with the same name
         fs.ensureDir(destinationPath, err => {
             if (err) {
@@ -36,7 +41,7 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
                 }
 
                 //get stats for the source item (file or folder)
-                fs.stat(path.join(sourceRoot, currentPath, item), (err, stats) => {
+                fs.stat(path.join(sourceFolder, item), (err, stats) => {
                     if (err) {
                         return nextitem(err);
                     }
@@ -49,7 +54,7 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
                     }
 
                     var destinationFolder = path.join(destinationPath, item);
-                    var sourceFile = path.join(sourceRoot, currentPath, item);
+                    var sourceFile = path.join(sourceFolder, item);
 
                     //if destination folder exists, do we need to override it?
                     that.handleDestination(destinationFolder, override, (err, perform) => {
