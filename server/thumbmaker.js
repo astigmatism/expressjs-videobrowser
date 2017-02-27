@@ -47,59 +47,46 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
 
                         //define the destination Path
 
-                        that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, '.' + item), override, callback);
+                        that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, callback);
                         return nextitem();
                     }
 
                     //if a file, attempt a conversion
-
-                    var destinationFolder = path.join(destinationPath, item);
+                    
                     var sourceFile = path.join(sourceFolder, item);
+                    var destinationFile = path.join(destinationPath, item);
 
-                    //if destination folder exists, do we need to override it?
-                    that.handleDestination(destinationFolder, override, (err, perform) => {
+                    //if destination file exists, do we need to override it?
+                    that.handleDestination(destinationFile, override, (err, perform) => {
                         if (err) {
                             return nextitem(err);
                         }
 
                         if (perform) {
 
+                            console.log('--------------------------------------------------------------------');
                             console.log('Working: ' + sourceFile);
 
-                            var frameCountCommand = 'ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 "' + sourceFile + '"';
-                            var frameCount = 0;
+                            that.getAspectRatio(sourceFile, (err, width, height) => {
+                                if (err) {
+                                    return callback(err);
+                                }
 
-                            exec(frameCountCommand, (err, stdout, stderr) => {
-                                
-                                //stdout is exactly frame count
-                                frameCount = parseInt(stdout, 10);
-                            
-                            }).on('close', code => {
-                                
-                                console.log(sourceFile + ' frame count: ' + frameCount);
+                                var aspectRatio = height / width;
 
-                                //with frame count, we can extract exactly 100 frames
-                                var captureEvery = Math.round(frameCount / 100);
+                                that.getFrameCount(sourceFile, (err, frameCount) => {
 
-                                //var command = 'ffmpeg -i "' + sourceFile + '" -vf fps=1/5 "' + path.join(destinationFolder, '%d.png') + '"';
-                                var captureCommand = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=320:240,tile=10x10" "' + path.join(destinationFolder, 'out.png') + '"';
-                                
-                                console.log(captureCommand);
+                                    //with frame count known, we can extract exactly 100 frames
+                                    var captureEvery = Math.round(frameCount / 100);
 
-                                exec(captureCommand, (err, stdout, stderr) => {
-                                    if (err) {
-                                        console.log(err);
-                                    }
-                                    console.log(stdout);
-                                })
-                                .on('close', function(code) {
+                                    that.captureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
+                                        if (err) {
+                                            return callback(err);
+                                        }
 
-                                    console.log('Finished ffmpeg with code ' + code);
-                                    
+                                        nextitem();
+                                    });
 
-                                    //TODO: next, change size of thumbnails
-                                    
-                                    nextitem();
                                 });
                             });
                         }
@@ -120,56 +107,115 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
     });
 };
 
-ThumbMaker.handleDestination = function(folder, override, callback) {
+ThumbMaker.captureFrames = function(sourceFile, destinationFile, captureEvery, aspectRatio, callback) {
 
-    fs.exists(folder, exists => {
+    var thumbWidth = 300;
+    var thumbHeight = 300 * aspectRatio;
+
+    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=10x10" "' + path.join(destinationFile) + '"';
+    
+    console.log('Capture command: ' + command);
+
+    exec(command, (err, stdout, stderr) => {
+        if (err) {
+            return callback(err);
+        }
+    })
+    .on('close', code => {
+
+        console.log('Finished ffmpeg capture with code ' + code);
+        
+        callback();
+    });
+};
+
+ThumbMaker.getAspectRatio = function(sourceFile, callback) {
+
+    var commandWidth = 'ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=width "' + sourceFile + '"';
+    var commandHeight = 'ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height "' + sourceFile + '"';
+    var width = 0;
+    var height = 0;
+
+    console.log('Aspect Ratio command: ' + commandWidth);
+
+    exec(commandWidth, (err, stdout, stderr) => {
+        if (err) {
+            return callback(err);
+        }
+
+        width = stdout.match(/=(\d*)/)[1];
+    })
+    .on('close', code => {
+
+        console.log('Finished ffmpeg aspect ratio width with code ' + code);
+        
+        exec(commandHeight, (err, stdout, stderr) => {
+            if (err) {
+                return callback(err);
+            }
+
+            height = stdout.match(/=(\d*)/)[1];
+        })
+        .on('close', code => {
+
+            console.log('Finished ffmpeg aspect ratio height width with code ' + code);
+            
+            console.log('Aspect Ratio result: ' + width + 'x' + height);
+
+            callback(null, width, height);
+        });
+    });
+};
+
+ThumbMaker.getFrameCount = function(sourceFile, callback) {
+
+    var command = 'ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 "' + sourceFile + '"';
+    var frameCount = 0;
+
+    console.log('Frame count command: ' + command);
+
+    exec(command, (err, stdout, stderr) => {
+        if (err) {
+            return callback(err);
+        }               
+        //stdout is exactly frame count
+        frameCount = parseInt(stdout, 10);
+    
+    }).on('close', code => {
+        
+        console.log('Frame Count result: ' + frameCount);
+
+        callback(null, frameCount);
+    });
+};
+
+ThumbMaker.handleDestination = function(file, override, callback) {
+
+    fs.exists(file, exists => {
 
         if (exists) {
 
-            //if exists and override work, clear dir and return true
+            //if exists and override, delete file and return true
             if (override) {
-                fs.emptyDir(folder, err => {
+
+                fs.unlink(file, err => {
                     if (err) {
                         return callback(err);
                     }
-                    console.log('Exists and Override: ' + folder);
                     return callback(null, true);
                 });
             } 
 
-            //if exists and we don't override, ensure there are items in the folder
+            //if exists and we don't override, no work needed return false
             else {
-
-                fs.readdir(folder, (err, items) => {
-                    if (err) {
-                        return callback(err);
-                    }
-
-                    //if contents, we don't need to perform work
-                    if (items.length > 0) {
-                        console.log('Exists and NO Override and items found: ' + folder);
-                        return callback(null, false);
-                    }
-
-                    //if no contents, let's perform the work
-                    else {
-                        console.log('Exists and NO Override and NO items found: ' + folder);
-                        return callback(null, true);
-                    }
-                });
+                return callback(null, false);
             }
 
         }
 
-        //doesn't exist, create and perform work
+        //doesn't exist, return true
         else {
-            fs.ensureDir(folder, err => {
-                if (err) {
-                    return callback(err);
-                }
-                console.log('Does not exist: ' + folder);
-                return callback(null, true)
-            });
+            return callback(null, true);
         }
     });
 };
