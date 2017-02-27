@@ -32,6 +32,7 @@ ApplicationControl.autoCapture = function(sourcePath) {
 
     if (!thumbmaker.working) {
         
+        console.log('Thumb Maker task starting...');
         thumbmaker.working = true;
 
         thumbmaker.start(sourcePath, '', './public/thumbs', false, (err, data) => {
@@ -42,7 +43,7 @@ ApplicationControl.autoCapture = function(sourcePath) {
         });
     }
     else {
-        console.log('Auto capture alreday working...');
+        console.log('Thumb Maker task alreday working...');
     }
 };
 

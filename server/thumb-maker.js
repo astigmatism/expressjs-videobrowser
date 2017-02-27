@@ -11,7 +11,6 @@ ThumbMaker.working = false;
 ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override, callback) {
 
     var that = this;
-
     var sourceFolder = path.join(sourceRoot, currentPath);
 
     //get contents of folder to analyze
