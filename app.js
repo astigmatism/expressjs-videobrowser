@@ -4,7 +4,8 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var thumbmaker = require('./server/thumbmaker');
+var watch = require('watch');
+var control = require('./server/application-control');
 
 var index = require('./routes/index');
 
@@ -42,30 +43,6 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-var working = false;
-var autoConvert = function() {
-
-	if (process.argv.length < 3) {
-		console.log('Video folder path argument was not set.');
-		return;
-	}
-
-	console.log(working);
-
-	if (!working) {
-
-		working = true;
-		thumbmaker.start(process.argv[2], '', './public/thumbs', true, (err, data) => {
-			working = false;
-		});
-	}
-	else {
-		console.log('Cannot start thumbmaker, already working.');
-	}
-};
-
-//set up interval to check for files to convert
-//setInterval(autoConvert, 1000); //one minute
-autoConvert();
+control.onApplicationStart(process.argv);
 
 module.exports = app;

@@ -65,7 +65,8 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                         if (perform) {
 
                             console.log('--------------------------------------------------------------------');
-                            console.log('Working: ' + sourceFile);
+                            console.log('Source: ' + sourceFile);
+                            console.log('Destination: ' + destinationFile);
 
                             that.getAspectRatio(sourceFile, (err, width, height) => {
                                 if (err) {
@@ -114,7 +115,8 @@ ThumbMaker.captureFrames = function(sourceFile, destinationFile, captureEvery, a
 
     var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=10x10" "' + path.join(destinationFile) + '"';
     
-    console.log('Capture command: ' + command);
+    //console.log('Capture command: ' + command);
+    console.log('Capturing every ' + captureEvery + ' frames...');
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
@@ -123,7 +125,7 @@ ThumbMaker.captureFrames = function(sourceFile, destinationFile, captureEvery, a
     })
     .on('close', code => {
 
-        console.log('Finished ffmpeg capture with code ' + code);
+        console.log('Frame Capture result: ' + code);
         
         callback();
     });
@@ -136,7 +138,8 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
     var width = 0;
     var height = 0;
 
-    console.log('Aspect Ratio command: ' + commandWidth);
+    //console.log('Aspect Ratio command: ' + commandWidth);
+    console.log('Getting aspect ratio...');
 
     exec(commandWidth, (err, stdout, stderr) => {
         if (err) {
@@ -146,8 +149,6 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
         width = stdout.match(/=(\d*)/)[1];
     })
     .on('close', code => {
-
-        console.log('Finished ffmpeg aspect ratio width with code ' + code);
         
         exec(commandHeight, (err, stdout, stderr) => {
             if (err) {
@@ -157,8 +158,6 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
             height = stdout.match(/=(\d*)/)[1];
         })
         .on('close', code => {
-
-            console.log('Finished ffmpeg aspect ratio height width with code ' + code);
             
             console.log('Aspect Ratio result: ' + width + 'x' + height);
 
@@ -172,7 +171,8 @@ ThumbMaker.getFrameCount = function(sourceFile, callback) {
     var command = 'ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 "' + sourceFile + '"';
     var frameCount = 0;
 
-    console.log('Frame count command: ' + command);
+    //console.log('Frame count command: ' + command);
+    console.log('Getting frame count...');
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
