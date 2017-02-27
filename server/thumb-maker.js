@@ -20,89 +20,91 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
             return callback(err);
         }
 
-        //that.syncfolders()
-
         //ensure a thumbnail destination exists with the same name
         fs.ensureDir(destinationPath, err => {
             if (err) {
                 return callback(err);
             }
 
-            //for each item in folder
-            async.eachSeries(items, (item, nextitem) => {
+            //if any files already in the destination do not have files in the source, we'll clean them up (deleted videos)
+            that.cleanUp(sourceFolder, destinationPath, err => {
 
-                //if begins with a dot, we pass
-                if (item.charAt(0) === '.') {
-                    return nextitem();
-                }
+                //for each item in folder
+                async.eachSeries(items, (item, nextitem) => {
 
-                //get stats for the source item (file or folder)
-                fs.stat(path.join(sourceFolder, item), (err, stats) => {
-                    if (err) {
-                        return nextitem(err);
-                    }
-
-                    //if a folder, recurrsively proceed into it
-                    if (stats.isDirectory()) {
-
-                        //define the destination Path
-
-                        that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, callback);
+                    //if begins with a dot, we pass
+                    if (item.charAt(0) === '.') {
                         return nextitem();
                     }
 
-                    //if a file, attempt a conversion
-                    
-                    var sourceFile = path.join(sourceFolder, item);
-                    var destinationFile = path.join(destinationPath, path.basename(item) + '.png');
-
-                    //if destination file exists, do we need to override it?
-                    that.handleDestination(destinationFile, override, (err, perform) => {
+                    //get stats for the source item (file or folder)
+                    fs.stat(path.join(sourceFolder, item), (err, stats) => {
                         if (err) {
                             return nextitem(err);
                         }
 
-                        if (perform) {
+                        //if a folder, recurrsively proceed into it
+                        if (stats.isDirectory()) {
 
-                            console.log('--------------------------------------------------------------------');
-                            console.log('Source: ' + sourceFile);
-                            console.log('Destination: ' + destinationFile);
+                            //define the destination Path
 
-                            that.getAspectRatio(sourceFile, (err, width, height) => {
-                                if (err) {
-                                    return callback(err);
-                                }
+                            that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, callback);
+                            return nextitem();
+                        }
 
-                                var aspectRatio = height / width;
+                        //if a file, attempt a conversion
+                        
+                        var sourceFile = path.join(sourceFolder, item);
+                        var destinationFile = path.join(destinationPath, path.basename(item) + '.png');
 
-                                that.getFrameCount(sourceFile, (err, frameCount) => {
+                        //if destination file exists, do we need to override it?
+                        that.handleDestination(destinationFile, override, (err, perform) => {
+                            if (err) {
+                                return nextitem(err);
+                            }
 
-                                    //with frame count known, we can extract exactly 100 frames
-                                    var captureEvery = Math.round(frameCount / 100);
+                            if (perform) {
 
-                                    that.captureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
-                                        if (err) {
-                                            return callback(err);
-                                        }
+                                console.log('--------------------------------------------------------------------');
+                                console.log('Source: ' + sourceFile);
+                                console.log('Destination: ' + destinationFile);
 
-                                        nextitem();
+                                that.getAspectRatio(sourceFile, (err, width, height) => {
+                                    if (err) {
+                                        return callback(err);
+                                    }
+
+                                    var aspectRatio = height / width;
+
+                                    that.getFrameCount(sourceFile, (err, frameCount) => {
+
+                                        //with frame count known, we can extract exactly 100 frames
+                                        var captureEvery = Math.round(frameCount / 100);
+
+                                        that.captureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
+                                            if (err) {
+                                                return callback(err);
+                                            }
+
+                                            nextitem();
+                                        });
+
                                     });
-
                                 });
-                            });
-                        }
-                        else {
-                            console.log('Already complete: ' + sourceFile);
-                            nextitem();
-                        }
+                            }
+                            else {
+                                console.log('Already complete: ' + sourceFile);
+                                nextitem();
+                            }
+                        });
                     });
-                });
 
-            }, err => {
-                if (err) {
-                    return callback(err);
-                }
-                callback(); //complete!
+                }, err => {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(); //complete!
+                });
             });
         });
     });
@@ -219,5 +221,67 @@ ThumbMaker.handleDestination = function(file, override, callback) {
         }
     });
 };
+
+ThumbMaker.cleanUp = function(sourceFolder, destinationPath, callback) {
+
+    //get contents of folder to analyze
+    fs.readdir(destinationPath, function(err, items) {
+        if (err) {
+            return callback(err);
+        }
+
+        //for each item in folder
+        async.eachSeries(items, (item, nextitem) => {
+
+            //if begins with a dot, we pass
+            if (item.charAt(0) === '.') {
+                return nextitem();
+            }
+
+            var destinationItem = path.join(destinationPath, item); //file or folder
+
+            //get stats for the source item (file or folder)
+            fs.stat(destinationItem, (err, stats) => {
+                if (err) {
+                    return nextitem(err);
+                }
+
+                //if a file
+                var sourceItem = path.join(sourceFolder, path.basename(item, path.extname(item))); //remove's the .png to reveal the source file name
+
+                //if a folder
+                if (stats.isDirectory()) {
+
+                    sourceItem = path.join(sourceFolder, item);
+                }
+
+                fs.exists(sourceItem, exists => {
+
+                    if (!exists) {
+                        
+                        //if a source file does not exist, we no longer need the resulting file in the destination folder
+                        console.log('File does not exist in source, removing: ' + destinationItem);
+
+                        fs.remove(destinationItem, err => {
+                            if (err) {
+                                return callback(err);
+                            }
+                            nextitem();
+                        });
+                    }
+                    else {
+                        nextitem();
+                    }
+                });
+            });
+
+        }, err => {
+            if (err) {
+                return callback(err);
+            }
+            callback(); //complete!
+        });
+    });
+};  
 
 module.exports = ThumbMaker;
