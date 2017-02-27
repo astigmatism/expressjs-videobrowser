@@ -54,7 +54,7 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                     //if a file, attempt a conversion
                     
                     var sourceFile = path.join(sourceFolder, item);
-                    var destinationFile = path.join(destinationPath, item);
+                    var destinationFile = path.join(destinationPath, path.basename(item) + '.png');
 
                     //if destination file exists, do we need to override it?
                     that.handleDestination(destinationFile, override, (err, perform) => {
@@ -109,8 +109,8 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
 
 ThumbMaker.captureFrames = function(sourceFile, destinationFile, captureEvery, aspectRatio, callback) {
 
-    var thumbWidth = 300;
-    var thumbHeight = 300 * aspectRatio;
+    var thumbWidth = 320;
+    var thumbHeight = 320 * aspectRatio; //width 320 allows for whole number result for height in both 16:9 abd 4:3
 
     var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=10x10" "' + path.join(destinationFile) + '"';
     
