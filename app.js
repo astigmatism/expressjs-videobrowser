@@ -42,6 +42,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+var working = false;
 var autoConvert = function() {
 
 	if (process.argv.length < 3) {
@@ -49,11 +50,13 @@ var autoConvert = function() {
 		return;
 	}
 
-	if (!thumbmaker.working) {
+	console.log(working);
 
-		thumbmaker.working = true;
-		thumbmaker.start(process.argv[2], './public/thumbs', '', false, (err, data) => {
-			thumbmaker.working = false;
+	if (!working) {
+
+		working = true;
+		thumbmaker.start(process.argv[2], '', './public/thumbs', true, (err, data) => {
+			working = false;
 		});
 	}
 	else {
@@ -62,7 +65,7 @@ var autoConvert = function() {
 };
 
 //set up interval to check for files to convert
-setInterval(autoConvert, 60000); //one minute
+//setInterval(autoConvert, 1000); //one minute
 autoConvert();
 
 module.exports = app;

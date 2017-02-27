@@ -8,7 +8,7 @@ ThumbMaker = function() {
 
 ThumbMaker.working = false;
 
-ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override, callback) {
+ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override, callback) {
 
     var that = this;
 
@@ -19,10 +19,6 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
         if (err) {
             return callback(err);
         }
-
-        //to mark folders, preceed them with a dot
-        var destinationPath = path.join(destinationRoot, '.' + currentPath);
-        
 
         //that.syncfolders()
 
@@ -49,9 +45,13 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
                     //if a folder, recurrsively proceed into it
                     if (stats.isDirectory()) {
 
-                        that.start(sourceRoot, destinationRoot, path.join(currentPath, item), override, callback);
+                        //define the destination Path
+
+                        that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, '.' + item), override, callback);
                         return nextitem();
                     }
+
+                    //if a file, attempt a conversion
 
                     var destinationFolder = path.join(destinationPath, item);
                     var sourceFile = path.join(sourceFolder, item);
@@ -66,22 +66,41 @@ ThumbMaker.start = function (sourceRoot, destinationRoot, currentPath, override,
 
                             console.log('Working: ' + sourceFile);
 
-                            var command = 'ffmpeg -i "' + sourceFile + '" -vf fps=1/5 "' + path.join(destinationFolder, '%d.png') + '"';
+                            var frameCountCommand = 'ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 "' + sourceFile + '"';
+                            var frameCount = 0;
+
+                            exec(frameCountCommand, (err, stdout, stderr) => {
+                                
+                                //stdout is exactly frame count
+                                frameCount = parseInt(stdout, 10);
                             
-                            exec(command, (err, stdout, stderr) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                                console.log(stdout);
-                            })
-                            .on('close', function(code) {
-
-                                console.log('Finished ffmpeg with code ' + code);
+                            }).on('close', code => {
                                 
+                                console.log(sourceFile + ' frame count: ' + frameCount);
 
-                                //TODO: next, change size of thumbnails
+                                //with frame count, we can extract exactly 100 frames
+                                var captureEvery = Math.round(frameCount / 100);
+
+                                //var command = 'ffmpeg -i "' + sourceFile + '" -vf fps=1/5 "' + path.join(destinationFolder, '%d.png') + '"';
+                                var captureCommand = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=320:240,tile=10x10" "' + path.join(destinationFolder, 'out.png') + '"';
                                 
-                                nextitem();
+                                console.log(captureCommand);
+
+                                exec(captureCommand, (err, stdout, stderr) => {
+                                    if (err) {
+                                        console.log(err);
+                                    }
+                                    console.log(stdout);
+                                })
+                                .on('close', function(code) {
+
+                                    console.log('Finished ffmpeg with code ' + code);
+                                    
+
+                                    //TODO: next, change size of thumbnails
+                                    
+                                    nextitem();
+                                });
                             });
                         }
                         else {
