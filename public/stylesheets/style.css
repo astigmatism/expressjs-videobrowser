@@ -19,6 +19,7 @@ li {
 	display: inline-block;
 	position: relative;
 	margin: 5px;
+	overflow: hidden;
 }
 
 #back {

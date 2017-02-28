@@ -47,8 +47,13 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
 
                             //define the destination Path
 
-                            that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, callback);
-                            return nextitem();
+                            that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, err => {
+                                if (err) {
+                                    return nextitem(err);
+                                }
+                                return nextitem();
+                            });
+                            return;
                         }
 
                         //if a file, attempt a conversion
@@ -70,14 +75,14 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
 
                                 that.getAspectRatio(sourceFile, (err, width, height) => {
                                     if (err) {
-                                        return callback(err);
+                                        return nextitem();
                                     }
 
                                     var aspectRatio = height / width;
 
                                     that.getFrameCount(sourceFile, (err, frameCount) => {
                                         if (err) {
-                                            return callback(err);
+                                            return nextitem();
                                         }
 
                                         //with frame count known, we can extract exactly 100 frames
@@ -85,10 +90,9 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
 
                                         that.captureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
                                             if (err) {
-                                                return callback(err);
+                                                return nextitem();
                                             }
-
-                                            nextitem();
+                                            return nextitem();
                                         });
 
                                     });
@@ -96,7 +100,7 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                             }
                             else {
                                 console.log('Already complete: ' + sourceFile);
-                                nextitem();
+                                return nextitem();
                             }
                         });
                     });
@@ -126,10 +130,6 @@ ThumbMaker.captureFrames = function(sourceFile, destinationFile, captureEvery, a
         if (err) {
             return callback(err);
         }
-    })
-    .on('close', code => {
-
-        console.log('Frame Capture result: ' + code);
         
         callback();
     });
@@ -151,23 +151,19 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
         }
 
         width = stdout.match(/=(\d*)/)[1];
-    })
-    .on('close', code => {
-        
+
         exec(commandHeight, (err, stdout, stderr) => {
             if (err) {
                 return callback(err);
             }
 
             height = stdout.match(/=(\d*)/)[1];
-        })
-        .on('close', code => {
-            
+
             console.log('Aspect Ratio result: ' + width + 'x' + height);
 
-            callback(null, width, height);
+            return callback(null, width, height);
         });
-    });
+    })
 };
 
 ThumbMaker.getFrameCount = function(sourceFile, callback) {
@@ -184,8 +180,6 @@ ThumbMaker.getFrameCount = function(sourceFile, callback) {
         }               
         //stdout is exactly frame count
         frameCount = parseInt(stdout, 10);
-    
-    }).on('close', code => {
         
         console.log('Frame Count result: ' + frameCount);
 

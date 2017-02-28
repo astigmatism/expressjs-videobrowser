@@ -45,8 +45,6 @@ var Application = function() {
 					var height = this.height;
 					var width = this.width;
 
-					console.log(height);
-
 					var aspectRatio =  height / width;
 					var cssheight = 320 * aspectRatio;
 
@@ -80,3 +78,7 @@ var Application = function() {
 	});
 
 }();
+
+Application.getRandomFrame = function(width, height, callback) {
+
+};
