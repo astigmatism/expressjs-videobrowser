@@ -82,9 +82,11 @@ ApplicationControl.getDirectoryListing = function(folder, callback) {
                     return nextitem();
                 }
 
-                //if a file, attempt a conversion
+                //if a file
                 
-                listing.files[item] = {};
+                listing.files[item] = {
+                    filename: path.basename(item, path.extname(item))
+                };
                 nextitem();
             });
 

@@ -19,7 +19,7 @@ router.get('*', function(req, res, next) {
 	control.getDirectoryListing(path, (err, contents) => {
 
 		res.render('index', { 
-			listing: JSON.stringify(contents)
+			clientdata: contents
 		});
 	});
 });

@@ -9,9 +9,38 @@ a {
 
 ul {
 	list-style: none;
+	margin: 0;
+	padding: 0;
 }
 
-li.videofile div.preview {
+li {
 	width: 320px;
+	height: 240px;
 	display: inline-block;
+	position: relative;
+	margin: 5px;
+}
+
+#back {
+	width: 160px;
+	border: solid #ccc 2px;
+}
+
+li.folder {
+	border: solid #ccc 2px;
+}
+
+li.file {
+	background-color: #eee;
+}
+
+div.caption {
+	position: absolute;
+}
+
+div.preview {
+	position: absolute;
+	top: 20px;
+	width: 320px;
+	height: 160px;
 }
