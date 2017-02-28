@@ -6,3 +6,12 @@ body {
 a {
   color: #00B7FF;
 }
+
+ul {
+	list-style: none;
+}
+
+li.videofile div.preview {
+	width: 320px;
+	display: inline-block;
+}

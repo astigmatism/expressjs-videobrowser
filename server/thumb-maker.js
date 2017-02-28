@@ -76,6 +76,9 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                                     var aspectRatio = height / width;
 
                                     that.getFrameCount(sourceFile, (err, frameCount) => {
+                                        if (err) {
+                                            return callback(err);
+                                        }
 
                                         //with frame count known, we can extract exactly 100 frames
                                         var captureEvery = Math.round(frameCount / 100);
@@ -259,7 +262,7 @@ ThumbMaker.cleanUp = function(sourceFolder, destinationPath, callback) {
                     if (!exists) {
                         
                         //if a source file does not exist, we no longer need the resulting file in the destination folder
-                        console.log('File does not exist in source, removing: ' + destinationItem);
+                        console.log('File or folder does not exist in source, removing: ' + destinationItem);
 
                         fs.remove(destinationItem, err => {
                             if (err) {

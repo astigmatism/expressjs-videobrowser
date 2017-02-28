@@ -6,10 +6,19 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var watch = require('watch');
 var control = require('./server/application-control');
-
-var index = require('./routes/index');
+var routes = require('./routes/index');
 
 var app = express();
+
+//port
+var useport = 8080;
+
+if (process.argv.length < 2) {
+	console.log('Please enter the port number as the third parameter. Using 8080 as default');
+} else {
+	useport = process.argv[2];
+}
+app.set('port', useport);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -23,7 +32,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', index);
+app.use('/', routes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -43,6 +52,9 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-control.onApplicationStart(process.argv);
+var server = app.listen(app.get('port'));
+server.timeout = 10800000; //3 hours repsonse timeout
+
+control.onApplicationStart(process.argv[3]);
 
 module.exports = app;
