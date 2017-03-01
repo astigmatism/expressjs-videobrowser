@@ -24,7 +24,7 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                 return callback(err);
             }
 
-            //if any files already in the destination do not have files in the source, we'll clean them up (deleted videos)
+            //if any files already in the destination do not have files in the source, we'll clean them up (deleted)
             that.cleanUp(sourceFolder, destinationPath, err => {
 
                 //for each item in folder
@@ -55,7 +55,15 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                             return;
                         }
 
-                        //if a file, attempt a conversion
+                        //if a file, attempt a conversion, first detect which type
+                        
+                        var isImage = /\.(jpe?g|png|gif|bmp)$/i.test(item);
+                        var isVideo = /\.(avi|wmv|mp4|m4v)$/i.test(item);
+
+                        if (!isImage && !isVideo) {
+                            console.log('Unknown file type: ' + item);
+                        }
+                        return nextitem();
                         
                         var sourceFile = path.join(sourceFolder, item);
                         var destinationFile = path.join(destinationPath, path.basename(item) + '.png');
