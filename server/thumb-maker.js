@@ -2,11 +2,10 @@ const fs = require('fs-extra');
 const path = require('path');
 const async = require('async');
 const exec = require('child_process').exec;
+const config = require('config');
 
 ThumbMaker = function() {
 };
-
-ThumbMaker.working = false;
 
 ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override, callback) {
 
@@ -86,7 +85,7 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                                         }
 
                                         //with frame count known, we can extract exactly 100 frames
-                                        var captureEvery = Math.round(frameCount / 100);
+                                        var captureEvery = Math.round(frameCount / (config.get('tiles.x') * (config.get('tiles.y'))));
 
                                         that.captureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
                                             if (err) {
@@ -118,16 +117,17 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
 
 ThumbMaker.captureFrames = function(sourceFile, destinationFile, captureEvery, aspectRatio, callback) {
 
-    var thumbWidth = 320;
-    var thumbHeight = 320 * aspectRatio; //width 320 allows for whole number result for height in both 16:9 abd 4:3
+    var thumbWidth = config.get('thumbSize.width');
+    var thumbHeight = thumbWidth * aspectRatio;
 
-    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=10x10" "' + path.join(destinationFile) + '"';
+    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=' + config.get('tiles.x') + 'x' + config.get('tiles.y') + '" "' + path.join(destinationFile) + '"';
     
     //console.log('Capture command: ' + command);
     console.log('Capturing every ' + captureEvery + ' frames...');
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
+            console.log(stderr);
             return callback(err);
         }
         
@@ -147,6 +147,7 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
 
     exec(commandWidth, (err, stdout, stderr) => {
         if (err) {
+            console.log(stderr);
             return callback(err);
         }
 
@@ -154,6 +155,7 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
 
         exec(commandHeight, (err, stdout, stderr) => {
             if (err) {
+                console.log(stderr);
                 return callback(err);
             }
 
@@ -176,6 +178,7 @@ ThumbMaker.getFrameCount = function(sourceFile, callback) {
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
+            console.log(stderr);
             return callback(err);
         }               
         //stdout is exactly frame count

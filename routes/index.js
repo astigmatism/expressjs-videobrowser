@@ -17,7 +17,7 @@ router.get('*', function(req, res, next) {
 	var path = req.params[0] == '/' ? '' : req.params[0]; //strip out the empty /
 
 	control.getDirectoryListing(path, (err, contents) => {
-
+		
 		res.render('index', { 
 			clientdata: contents
 		});

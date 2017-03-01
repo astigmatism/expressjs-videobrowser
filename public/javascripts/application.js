@@ -1,7 +1,8 @@
-var Application = function() {
-	
+var Application = (function() {
+
 	$( document ).ready(function() {
 
+		var tiles = clientdata.tiles;
 
 		//back button
 		$('#back').on('click touch', function () {
@@ -27,16 +28,28 @@ var Application = function() {
 			})(folder, clientdata);
 		}
 
+		var iteration = 0;
+
 		//files
 		for (file in clientdata.files) {
 
-			(function(file, clientdata) {
+			(function(file, clientdata, iteration) {
 
 				var data = clientdata.files[file];
 				var li = $('<li class="file"></li>');
+				$('#listing').append(li);
 
 				var preview = $('<div class="preview" />');
 				li.append(preview);
+				var clickOverlay = $('<div class="click-overlay" />');
+				li.append(clickOverlay);
+				var scrubber = $('<div class="scrubber" />');
+				li.append(scrubber);
+				var framecounter = $('<div class="frame-counter" />');
+				scrubber.append(framecounter);
+				var caption = $('<div class="caption">' + data.filename + '</div>');
+				li.append(caption);
+				
 
 				var image = $('<img />').attr('src', '/thumbs' + clientdata.location + '/' + file);
 
@@ -44,41 +57,125 @@ var Application = function() {
 					
 					var height = this.height;
 					var width = this.width;
+					var maxFrame = (tiles.x * tiles.y) - 1;
+					var currentFrame = getRandomInt(0, maxFrame);
+					var paused = false;
+					var currentPrecentagePosition = 50;
+
+					width = (preview.width() / clientdata.thumbSize.width) * width;
+					height = (preview.height() / clientdata.thumbSize.height) * height;
 
 					var aspectRatio =  height / width;
-					var cssheight = 320 * aspectRatio;
+					var cssheight = preview.width() * aspectRatio;
+
+					var setBackgroundPosition = function(delta) {
+						currentFrame = currentFrame + delta;
+						currentFrame = currentFrame > maxFrame ? 0 : currentFrame;
+						currentFrame = currentFrame < 0 ? maxFrame : currentFrame;
+						backgroundPosition = getBackgoundPosition(currentFrame, width, height);
+						applyBackgroundPosition(preview, backgroundPosition);
+						framecounter.text(Math.round((currentFrame / maxFrame) * 100) + '%');
+					};
 
 					preview.css('height', cssheight + 'px');
-
 					preview.css('background-image', 'url("/thumbs' + clientdata.location + '/' + file + '")');
+					preview.css('background-size', width + 'px ' + height + 'px');
 
-					preview.mousemove(function(event) {
+					setBackgroundPosition(0);
+					
 
-						var offset = $(this).offset();
+					// setTimeout(function() {
+					// 	setInterval(function() {
+							
+					// 		if (!paused) {
+					// 			setBackgroundPosition(1);
+					// 		}
+					// 	}, 3000);
+					// }, iteration * 100);
 
-						var percentageOfWidth = Math.round(((event.pageX - offset.left) / 320) * 100);
-						var column = percentageOfWidth % 10;
-						var row = Math.floor(percentageOfWidth / 10);
+					var scrollInterval;
 
-						var xPos = (column * (width / 10)) * -1;
-						var yPos = (row * (height / 10)) * -1;
-
-						preview.css('background-position', xPos + 'px ' + yPos + 'px');
+					clickOverlay.mouseleave(function(event) {
+						paused = false;
+						//clearInterval(scrollInterval);
 					});
+
+					clickOverlay.click(function(event) {
+						
+						var offset = $(this).offset();
+						var percentageOfWidth = Math.round(((event.pageX - offset.left) / preview.width()) * 100);
+
+						if (scrollInterval) {
+							clearInterval(scrollInterval);
+							scrollInterval = null;
+							return;
+						}
+
+						if (percentageOfWidth < 25) {
+							scrollInterval = setInterval(function() {
+								setBackgroundPosition(-1);
+							}, clientdata.scrollSpeed);
+						}
+						else if (percentageOfWidth > 75) {
+							scrollInterval = setInterval(function() {
+								setBackgroundPosition(1);
+							}, clientdata.scrollSpeed);
+						}
+						else {
+							window.location = '/thumbs' + clientdata.location + '/' + file;
+						}
+					});
+
+					// preview.mousemove(function(event) {
+
+					// 	var offset = $(this).offset();
+					// 	var percentageOfWidth = Math.round(((event.pageX - offset.left) / 320) * 100);
+
+					// 	if (percentageOfWidth > currentPrecentagePosition) {
+					// 		currentFrame = (currentFrame + 1) % 100;
+					// 	}
+					// 	else if (percentageOfWidth < currentPrecentagePosition) {
+					// 		currentFrame = (currentFrame + 1) % 100;
+					// 	} else {
+					// 		return; //same value, no changes
+					// 	}
+					// 	backgroundPosition = getBackgoundPosition(currentFrame, width, height);
+					// 	applyBackgroundPosition(preview, backgroundPosition);
+					// 	framecounter.text(currentFrame);
+					// 	currentPrecentagePosition = percentageOfWidth;
+					// });
 				});
 
-				var caption = $('<div class="caption">' + data.filename + '</div>');
-				li.append(caption);
-
-
-				
-				$('#listing').append(li);
-			})(file, clientdata);	
+			})(file, clientdata, iteration++);	
 		}
+
+		var applyBackgroundPosition = function(element, result) {
+
+			element.css('background-position', result.x + 'px ' + result.y + 'px');
+			// element.animate({
+			// 	'background-position-x': result.x,
+			// 	'background-position-y': result.y
+			// });
+		};
+
+		var getBackgoundPosition = function(frameNumber, width, height) {
+
+			var column = frameNumber % tiles.x;
+			var row = Math.floor(frameNumber / tiles.y);
+
+			var xPos = (column * (width / tiles.x)) * -1;
+			var yPos = (row * (height / tiles.y)) * -1;
+
+			return {
+				x: xPos,
+				y: yPos
+			}
+		};
+
+		var getRandomInt = function(min, max) {
+
+			return Math.floor(Math.random() * (max - min + 1)) + min;
+		};
 	});
 
-}();
-
-Application.getRandomFrame = function(width, height, callback) {
-
-};
+})();

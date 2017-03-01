@@ -1,0 +1,11 @@
+{
+	"thumbSize": {
+		"width": 160,
+		"height": 120
+	},
+	"tiles": {
+		"x": 20,
+		"y": 20
+	},
+	"scrollSpeed": 400
+}

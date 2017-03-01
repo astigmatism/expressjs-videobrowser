@@ -3,6 +3,7 @@ const watch = require('watch');
 const path = require('path');
 const async = require('async');
 const thumbmaker = require('./thumb-maker');
+const config = require('config');
 
 const thumbFolder = './public/thumbs';
 
@@ -52,7 +53,10 @@ ApplicationControl.getDirectoryListing = function(folder, callback) {
     var listing = {
         location: folder,
         files: {},
-        folders: {}
+        folders: {},
+        tiles: config.get('tiles'),
+        scrollSpeed: config.get('scrollSpeed'),
+        thumbSize: config.get('thumbSize')
     };
 
     //get contents of folder to analyze
