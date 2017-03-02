@@ -39,6 +39,7 @@ ApplicationControl.autoCapture = function(sourcePath) {
             if (err) {
                 console.log(err);
             }
+            console.log('Thumb Maker task complete.');
             thumbmaker.working = false;
         });
     }

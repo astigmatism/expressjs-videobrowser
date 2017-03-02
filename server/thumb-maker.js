@@ -3,6 +3,7 @@ const path = require('path');
 const async = require('async');
 const exec = require('child_process').exec;
 const config = require('config');
+const gm = require('gm');
 
 ThumbMaker = function() {
 };
@@ -58,15 +59,11 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
                         //if a file, attempt a conversion, first detect which type
                         
                         var isImage = /\.(jpe?g|png|gif|bmp)$/i.test(item);
-                        var isVideo = /\.(avi|wmv|mp4|m4v)$/i.test(item);
-
-                        if (!isImage && !isVideo) {
-                            console.log('Unknown file type: ' + item);
-                        }
-                        return nextitem();
+                        var isVideo = /\.(avi|wmv|mp4|m4v|mpg|mkv|mov|flv)$/i.test(item);
+                        var isAvoid = /\.(db|zip|txt|url)$/i.test(item);
                         
                         var sourceFile = path.join(sourceFolder, item);
-                        var destinationFile = path.join(destinationPath, path.basename(item) + '.png');
+                        var destinationFile = path.join(destinationPath, path.basename(item) + (isImage ? '.png' : (isVideo ? '.mp4' : '')));
 
                         //if destination file exists, do we need to override it?
                         that.handleDestination(destinationFile, override, (err, perform) => {
@@ -76,34 +73,39 @@ ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override,
 
                             if (perform) {
 
-                                console.log('--------------------------------------------------------------------');
-                                console.log('Source: ' + sourceFile);
-                                console.log('Destination: ' + destinationFile);
+                                //ok, what type of conversion is this?
 
-                                that.getAspectRatio(sourceFile, (err, width, height) => {
-                                    if (err) {
-                                        return nextitem();
-                                    }
+                                if (isVideo) {
 
-                                    var aspectRatio = height / width;
+                                    console.log('------------------------------ video ------------------------------');
+                                    console.log('Source: ' + sourceFile);
+                                    console.log('Destination: ' + destinationFile);
 
-                                    that.getFrameCount(sourceFile, (err, frameCount) => {
+                                    that.convertVideo(sourceFile, destinationFile, err => {
                                         if (err) {
-                                            return nextitem();
+                                            console.log(err);
                                         }
-
-                                        //with frame count known, we can extract exactly 100 frames
-                                        var captureEvery = Math.round(frameCount / (config.get('tiles.x') * (config.get('tiles.y'))));
-
-                                        that.captureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
-                                            if (err) {
-                                                return nextitem();
-                                            }
-                                            return nextitem();
-                                        });
-
+                                        return nextitem();
                                     });
-                                });
+                                }
+                                else if (isImage) {
+
+                                    console.log('------------------------------ image ------------------------------');
+                                    console.log('Source: ' + sourceFile);
+                                    console.log('Destination: ' + destinationFile);
+
+                                    gm(sourceFile).resize(320).setFormat('png').quality(100).write(destinationFile, err => {
+                                        if (err) {
+                                            console.log(err);
+                                        }
+                                        return nextitem();
+                                    });
+                                }
+
+                                else {
+                                    console.log('We dont know what to do with this file type: ' + item);
+                                    return nextitem();
+                                }
                             }
                             else {
                                 console.log('Already complete: ' + sourceFile);
@@ -159,7 +161,12 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
             return callback(err);
         }
 
-        width = stdout.match(/=(\d*)/)[1];
+        var match = stdout.match(/=(\d*)/);
+
+        if (match.length < 2) {
+            return callback(stdout);
+        }
+        width = match[1];
 
         exec(commandHeight, (err, stdout, stderr) => {
             if (err) {
@@ -195,6 +202,24 @@ ThumbMaker.getFrameCount = function(sourceFile, callback) {
         console.log('Frame Count result: ' + frameCount);
 
         callback(null, frameCount);
+    });
+};
+
+ThumbMaker.convertVideo = function(sourceFile, destinationFile, callback) {
+
+    var command = 'HandBrakeCLI --input "' + sourceFile + '" --output "' + destinationFile + '" --encoder x264 --vb 1800 --ab 0 --maxWidth 320 --maxHeight 240 --two-pass --optimize';
+
+    console.log('Coverting video: ' + sourceFile);
+
+    exec(command, (err, stdout, stderr) => {
+        if (err) {
+            console.log(stderr);
+            return callback(err);
+        }
+
+        console.log('Coverting video complete: ' + destinationFile);
+
+        callback();
     });
 };
 
