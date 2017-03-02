@@ -30,6 +30,40 @@ var Application = (function() {
 
 		var iteration = 0;
 
+		//images
+		for (file in clientdata.images) {
+
+			(function(file, clientdata, iteration) {
+
+				var data = clientdata.images[file];
+				var li = $('<li class="image"></li>');
+				$('#listing').append(li);
+				var image = $('<img src="/thumbs' + clientdata.location + '/' + file + '" />');
+				li.append(image);
+				var clickOverlay = $('<div class="click-overlay" />');
+				li.append(clickOverlay);
+				// var preview = $('<div class="preview" />');
+				// preview.css('background-image', 'url("/thumbs' + clientdata.location + '/' + file + '")');
+				// li.append(preview);
+
+				clickOverlay.click(function(event) {
+						
+					var offset = $(this).offset();
+					var percentageOfWidth = Math.round(((event.pageX - offset.left) / li.width()) * 100);
+
+
+					if (percentageOfWidth < 25) {
+					}
+					else if (percentageOfWidth > 75) {	
+					}
+					else {
+						window.open(clientdata.location + '/' + file);
+					}
+				});
+
+			})(file, clientdata, iteration++);
+		};
+
 		//files
 		for (file in clientdata.files) {
 

@@ -53,11 +53,9 @@ ApplicationControl.getDirectoryListing = function(folder, callback) {
     var sourcePath = path.join(thumbFolder, folder);
     var listing = {
         location: folder,
-        files: {},
-        folders: {},
-        tiles: config.get('tiles'),
-        scrollSpeed: config.get('scrollSpeed'),
-        thumbSize: config.get('thumbSize')
+        videos: {},
+        images: {},
+        folders: {}
     };
 
     //get contents of folder to analyze
@@ -87,11 +85,26 @@ ApplicationControl.getDirectoryListing = function(folder, callback) {
                     return nextitem();
                 }
 
-                //if a file
-                
-                listing.files[item] = {
+                //what kind of file is this
+                var ext = path.extname(item);
+                var details = {
                     filename: path.basename(item, path.extname(item))
                 };
+                var append = null;
+
+                if (ext === '.png') {
+                    append = listing.images;
+                }
+
+                else if (ext === '.mp4') {
+                    append = listing.videos;
+                }
+
+                else {
+                    return nextitem();
+                }
+
+                append[item] = details;
                 nextitem();
             });
 
@@ -103,6 +116,13 @@ ApplicationControl.getDirectoryListing = function(folder, callback) {
         });
 
     });
+};
+
+ApplicationControl.getImagePath = function(partial) {
+
+    partial = partial.replace(/\.(png|mp4)$/, '');
+
+    return path.join(config.get('source'), partial);
 };
 
 module.exports = ApplicationControl;

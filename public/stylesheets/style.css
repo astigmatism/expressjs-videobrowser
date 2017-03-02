@@ -15,7 +15,7 @@ ul {
 
 li {
 	width: 320px;
-	height: 240px;
+	min-height: 240px;
 	display: inline-block;
 	position: relative;
 	margin: 5px;
@@ -48,6 +48,8 @@ div.preview {
 
 div.click-overlay {
 	position: absolute;
+	top: 0px;
+	left: 0px;
 	z-index: 100;
 	height: 100%;
 	width: 100%;

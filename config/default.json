@@ -1,11 +1,9 @@
 {
-	"thumbSize": {
-		"width": 160,
-		"height": 120
+	"source": "/Volumes/Spice",
+	"images": {
+		"ext": "png"
 	},
-	"tiles": {
-		"x": 20,
-		"y": 20
-	},
-	"scrollSpeed": 400
+	"videos": {
+		"ext": "mp4"
+	}
 }
