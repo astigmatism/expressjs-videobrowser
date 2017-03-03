@@ -5,147 +5,150 @@ const exec = require('child_process').exec;
 const config = require('config');
 const gm = require('gm');
 
-ThumbMaker = function() {
-};
+//private
+var thumbFolder = config.get('thumbFolder');
 
-ThumbMaker.start = function (sourceRoot, currentPath, destinationPath, override, callback) {
+//public
+exports = module.exports = {
 
-    var that = this;
-    var sourceFolder = path.join(sourceRoot, currentPath);
+    working: false,
 
-    //get contents of folder to analyze
-    fs.readdir(sourceFolder, function(err, items) {
-        if (err) {
-            return callback(err);
-        }
+    start: function (sourceRoot, currentPath, destinationPath, override, callback) {
 
-        //ensure a thumbnail destination exists with the same name
-        fs.ensureDir(destinationPath, err => {
+        var that = this;
+        var sourceFolder = path.join(sourceRoot, currentPath);
+
+        //get contents of folder to analyze
+        fs.readdir(sourceFolder, (err, items) => {
             if (err) {
                 return callback(err);
             }
 
-            //if any files already in the destination do not have files in the source, we'll clean them up (deleted)
-            that.cleanUp(sourceFolder, destinationPath, err => {
+            //ensure a thumbnail destination exists with the same name
+            fs.ensureDir(destinationPath, err => {
+                if (err) {
+                    return callback(err);
+                }
 
-                //for each item in folder
-                async.eachSeries(items, (item, nextitem) => {
+                //if any files already in the destination do not have files in the source, we'll clean them up (deleted)
+                cleanUp(sourceFolder, destinationPath, err => {
 
-                    //if begins with a dot, we pass
-                    if (item.charAt(0) === '.') {
-                        return nextitem();
-                    }
+                    //for each item in folder
+                    async.eachSeries(items, (item, nextitem) => {
 
-                    //get stats for the source item (file or folder)
-                    fs.stat(path.join(sourceFolder, item), (err, stats) => {
-                        if (err) {
-                            return nextitem(err);
+                        //if begins with a dot, we pass
+                        if (item.charAt(0) === '.') {
+                            return nextitem();
                         }
 
-                        //if a folder, recurrsively proceed into it
-                        if (stats.isDirectory()) {
-
-                            //define the destination Path
-
-                            that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, err => {
-                                if (err) {
-                                    return nextitem(err);
-                                }
-                                return nextitem();
-                            });
-                            return;
-                        }
-
-                        //if a file, attempt a conversion, first detect which type
-                        
-                        var isImage = /\.(jpe?g|png|gif|bmp)$/i.test(item);
-                        var isVideo = /\.(avi|wmv|mp4|m4v|mpg|mkv|mov|flv)$/i.test(item);
-                        var isAvoid = /\.(db|zip|txt|url)$/i.test(item);
-                        
-                        var sourceFile = path.join(sourceFolder, item);
-                        var destinationFile = path.join(destinationPath, path.basename(item) + (isImage ? '.png' : (isVideo ? '.mp4' : '')));
-
-                        //if destination file exists, do we need to override it?
-                        that.handleDestination(destinationFile, override, (err, perform) => {
+                        //get stats for the source item (file or folder)
+                        fs.stat(path.join(sourceFolder, item), (err, stats) => {
                             if (err) {
                                 return nextitem(err);
                             }
 
-                            if (perform) {
+                            //if a folder, recurrsively proceed into it
+                            if (stats.isDirectory()) {
 
-                                //ok, what type of conversion is this?
+                                //define the destination Path
 
-                                if (isVideo) {
+                                that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, err => {
+                                    if (err) {
+                                        return nextitem(err);
+                                    }
+                                    return nextitem();
+                                });
+                                return;
+                            }
 
-                                    console.log('------------------------------ video ------------------------------');
+                            //if a file, attempt a conversion, first detect which type
+                            
+                            var isImage = new RegExp(config.get('patterns.image'), 'i').test(item);
+                            var isVideo = new RegExp(config.get('patterns.video'), 'i').test(item);
+                            var isAvoid = new RegExp(config.get('patterns.avoid'), 'i').test(item);
+                            
+                            var sourceFile = path.join(sourceFolder, item);
+                            var destinationFileName = path.basename(item) + (isImage ? '.' + config.get('images.ext') : (isVideo ? '.' + config.get('videos.ext') : ''));
+                            var destinationFile = path.join(destinationPath, destinationFileName);
+
+                            //if destination file exists, do we need to override it?
+                            handleDestination(destinationFile, override, (err, perform) => {
+                                if (err) {
+                                    return nextitem(err);
+                                }
+
+                                if (perform) {
+
+                                    console.log('------------------------------ ' + (isImage ? 'image' : (isVideo ? 'video' : '')) + ' ------------------------------');
                                     console.log('Source: ' + sourceFile);
                                     console.log('Destination: ' + destinationFile);
 
-                                    that.convertVideo(sourceFile, destinationFile, err => {
-                                        if (err) {
-                                            console.log(err);
-                                        }
+                                    //ok, what type of conversion is this?
+
+                                    if (isVideo) {
+
+                                        convertVideo(sourceFile, destinationFile, err => {
+                                            if (err) {
+                                                console.log(err);
+                                            }
+                                            return nextitem();
+                                        });
+                                    }
+                                    else if (isImage) {
+
+                                        gm(sourceFile).resize(320).setFormat(config.get('images.ext')).quality(100).write(destinationFile, err => {
+                                            if (err) {
+                                                console.log(err);
+                                            }
+                                            return nextitem();
+                                        });
+                                    }
+
+                                    else {
+                                        console.log('We dont know what to do with this file type: ' + item);
                                         return nextitem();
-                                    });
+                                    }
                                 }
-                                else if (isImage) {
-
-                                    console.log('------------------------------ image ------------------------------');
-                                    console.log('Source: ' + sourceFile);
-                                    console.log('Destination: ' + destinationFile);
-
-                                    gm(sourceFile).resize(320).setFormat('png').quality(100).write(destinationFile, err => {
-                                        if (err) {
-                                            console.log(err);
-                                        }
-                                        return nextitem();
-                                    });
-                                }
-
                                 else {
-                                    console.log('We dont know what to do with this file type: ' + item);
+                                    console.log('Already complete: ' + sourceFile);
                                     return nextitem();
                                 }
-                            }
-                            else {
-                                console.log('Already complete: ' + sourceFile);
-                                return nextitem();
-                            }
+                            });
                         });
-                    });
 
-                }, err => {
-                    if (err) {
-                        return callback(err);
-                    }
-                    callback(); //complete!
+                    }, err => {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(); //complete!
+                    });
                 });
             });
         });
-    });
+    }
 };
 
-ThumbMaker.captureFrames = function(sourceFile, destinationFile, captureEvery, aspectRatio, callback) {
+//private methods
 
-    var thumbWidth = config.get('thumbSize.width');
-    var thumbHeight = thumbWidth * aspectRatio;
+var convertVideo = function(sourceFile, destinationFile, callback) {
 
-    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=' + config.get('tiles.x') + 'x' + config.get('tiles.y') + '" "' + path.join(destinationFile) + '"';
-    
-    //console.log('Capture command: ' + command);
-    console.log('Capturing every ' + captureEvery + ' frames...');
+    var command = 'HandBrakeCLI --input "' + sourceFile + '" --output "' + destinationFile + '" --encoder x264 --vb 1800 --ab 0 --maxWidth 320 --maxHeight 240 --two-pass --optimize';
+
+    console.log('Coverting video: ' + sourceFile);
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
             console.log(stderr);
             return callback(err);
         }
-        
+
+        console.log('Coverting video complete: ' + destinationFile);
+
         callback();
     });
 };
 
-ThumbMaker.getAspectRatio = function(sourceFile, callback) {
+var getAspectRatio = function(sourceFile, callback) {
 
     var commandWidth = 'ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=width "' + sourceFile + '"';
     var commandHeight = 'ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height "' + sourceFile + '"';
@@ -180,10 +183,10 @@ ThumbMaker.getAspectRatio = function(sourceFile, callback) {
 
             return callback(null, width, height);
         });
-    })
+    });
 };
 
-ThumbMaker.getFrameCount = function(sourceFile, callback) {
+var getFrameCount = function(sourceFile, callback) {
 
     var command = 'ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 "' + sourceFile + '"';
     var frameCount = 0;
@@ -203,27 +206,29 @@ ThumbMaker.getFrameCount = function(sourceFile, callback) {
 
         callback(null, frameCount);
     });
-};
+}
 
-ThumbMaker.convertVideo = function(sourceFile, destinationFile, callback) {
+var captureFrames = function(sourceFile, destinationFile, captureEvery, aspectRatio, callback) {
 
-    var command = 'HandBrakeCLI --input "' + sourceFile + '" --output "' + destinationFile + '" --encoder x264 --vb 1800 --ab 0 --maxWidth 320 --maxHeight 240 --two-pass --optimize';
+    var thumbWidth = config.get('thumbSize.width');
+    var thumbHeight = thumbWidth * aspectRatio;
 
-    console.log('Coverting video: ' + sourceFile);
+    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=' + config.get('tiles.x') + 'x' + config.get('tiles.y') + '" "' + path.join(destinationFile) + '"';
+    
+    //console.log('Capture command: ' + command);
+    console.log('Capturing every ' + captureEvery + ' frames...');
 
     exec(command, (err, stdout, stderr) => {
         if (err) {
             console.log(stderr);
             return callback(err);
         }
-
-        console.log('Coverting video complete: ' + destinationFile);
-
+        
         callback();
     });
 };
 
-ThumbMaker.handleDestination = function(file, override, callback) {
+var handleDestination = function(file, override, callback) {
 
     fs.exists(file, exists => {
 
@@ -254,10 +259,10 @@ ThumbMaker.handleDestination = function(file, override, callback) {
     });
 };
 
-ThumbMaker.cleanUp = function(sourceFolder, destinationPath, callback) {
+var cleanUp = function(sourceFolder, destinationPath, callback) {
 
     //get contents of folder to analyze
-    fs.readdir(destinationPath, function(err, items) {
+    fs.readdir(destinationPath, (err, items) => {
         if (err) {
             return callback(err);
         }
@@ -314,6 +319,4 @@ ThumbMaker.cleanUp = function(sourceFolder, destinationPath, callback) {
             callback(); //complete!
         });
     });
-};  
-
-module.exports = ThumbMaker;
+}; 

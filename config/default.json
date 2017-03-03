@@ -1,9 +1,15 @@
 {
-	"source": "/Volumes/Spice",
+	"source": "/Users/ericglomstad/Projects/test videos",
+	"thumbFolder": "./public/thumbs",
 	"images": {
 		"ext": "png"
 	},
 	"videos": {
 		"ext": "mp4"
+	},
+	"patterns": {
+		"image": "\\.(jpe?g|png|gif|bmp)$",
+		"video": "\\.(avi|wmv|mp4|m4v|mpg|mkv|mov|flv)$",
+		"avoid": "\\.(db|zip|txt|url)$"
 	}
 }

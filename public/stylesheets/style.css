@@ -19,7 +19,6 @@ li {
 	display: inline-block;
 	position: relative;
 	margin: 5px;
-	overflow: hidden;
 }
 
 #back {
@@ -31,19 +30,12 @@ li.folder {
 	border: solid #ccc 2px;
 }
 
-li.file {
+li.video {
 	background-color: #eee;
 }
 
-div.caption {
-	position: absolute;
-}
-
-div.preview {
-	position: absolute;
-	top: 20px;
-	width: 320px;
-	height: 240px;
+li.video video {
+	width: 100%;
 }
 
 div.click-overlay {
@@ -55,19 +47,23 @@ div.click-overlay {
 	width: 100%;
 }
 
-div.frame-counter {
+div.scrubber {
 	position: absolute;
 	bottom: 0px;
-	right: 0px;
-	font-size: 10px;
-	color: white;
+	background-color: #444;
+	height: 20px;
+	width: 100%;
+	display: none;
 }
 
-div.scrubber {
-	width: 320px;
-	height: 20px;
-	border: solid 2px #333;
+div.scrubberActive {
+	display: block;
+	bottom: -20px;
+}
+
+div.scrubber div.marker {
+	width: 1px;
+	height: 100%;
+	background-color: white;
 	position: absolute;
-	bottom: 0px;
-	display: none;
 }

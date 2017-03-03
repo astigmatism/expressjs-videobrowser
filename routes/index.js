@@ -1,18 +1,13 @@
-var express = require('express');
-var control = require('../server/application-control');
-var router = express.Router();
+const express = require('express');
+const control = require('../server/application-control');
+const config = require('config');
+const router = express.Router();
 
-// router.get('/', function(req, res, next) {
+//private
 
-// 	control.getDirectoryListing('/', (err, contents) => {
-		
-// 		res.render('index', { 
-// 			listing: contents
-// 		});
-// 	});
-// });
+var imagePathRegEx = new RegExp('.*\.' + config.get('images.ext') + '$'); //catches .png files in path
 
-router.get(/.*\.png$/, function(req, res, next) {
+router.get(imagePathRegEx, function(req, res, next) {
 
 	var options = {
 		//root: __dirname + '/public/',

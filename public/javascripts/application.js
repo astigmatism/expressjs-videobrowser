@@ -36,15 +36,14 @@ var Application = (function() {
 			(function(file, clientdata, iteration) {
 
 				var data = clientdata.images[file];
+
+				//dom
 				var li = $('<li class="image"></li>');
 				$('#listing').append(li);
 				var image = $('<img src="/thumbs' + clientdata.location + '/' + file + '" />');
 				li.append(image);
 				var clickOverlay = $('<div class="click-overlay" />');
 				li.append(clickOverlay);
-				// var preview = $('<div class="preview" />');
-				// preview.css('background-image', 'url("/thumbs' + clientdata.location + '/' + file + '")');
-				// li.append(preview);
 
 				clickOverlay.click(function(event) {
 						
@@ -60,6 +59,96 @@ var Application = (function() {
 						window.open(clientdata.location + '/' + file);
 					}
 				});
+
+			})(file, clientdata, iteration++);
+		};
+
+		//videos
+		for (file in clientdata.videos) {
+
+			(function(file, clientdata, iteration) {
+
+				var data = clientdata.images[file];
+				var li = $('<li class="video"></li>');
+				$('#listing').append(li);
+				var caption = $('<div class="caption">' + file + '</div>');
+				li.append(caption);
+				var scrubber = $('<div class="scrubber" />');
+				li.append(scrubber);
+				var marker = $('<div class="marker" />');
+				scrubber.append(marker);
+
+				var video = $('<video />', {
+				    id: 'video',
+				    src: 'thumbs' + clientdata.location + '/' + file,
+				    type: 'video/mp4',
+				    controls: false,
+				    autoplay: false,
+				    preload: true
+				});
+				li.append(video);
+
+				video.on('loadedmetadata', function() {
+					this.currentTime = getRandomInt(1, this.duration);
+				});
+
+				video.on('timeupdate', function() {
+					var perc = this.currentTime / this.duration;
+					marker.css('left',  (video.width() * perc) + 'px');
+				});
+
+				var clickOverlay = $('<div class="click-overlay" />');
+				li.append(clickOverlay);
+
+				clickOverlay.click(function(event) {
+						
+					var offset = $(this).offset();
+					var percentageOfWidth = Math.round(((event.pageX - offset.left) / li.width()) * 100);
+
+					if (percentageOfWidth < 25) {
+
+						//back 5 seconds
+						video[0].currentTime = (video[0].currentTime - 5) > 0 ? video[0].currentTime - 5 : video[0].currentTime;
+						video[0].play();
+					}
+					else if (percentageOfWidth > 75) {	
+					
+						//back 5 seconds
+						video[0].currentTime = (video[0].currentTime + 5) < video[0].duration ? video[0].currentTime + 5 : video[0].currentTime;
+						video[0].play();
+					}
+					else {
+						//window.open(clientdata.location + '/' + file);
+					}
+				});
+
+				scrubber.mousemove(function(event) {
+
+					var offset = $(this).offset();
+					var percentageOfWidth = Math.round(((event.pageX - offset.left) / $(this).width()) * 100);
+					
+					video[0].currentTime = (percentageOfWidth * .01) * video[0].duration;
+				});
+
+				scrubber.click(function(event) {
+					if (video[0].paused) {
+						video[0].play();
+					}
+					else {
+						video[0].pause();
+					}
+				});
+
+				li.mouseover(function(event) {
+
+					scrubber.addClass('scrubberActive');
+				});
+
+				li.mouseleave(function(event) {
+
+					scrubber.removeClass('scrubberActive');
+				});
+
 
 			})(file, clientdata, iteration++);
 		};
@@ -182,34 +271,34 @@ var Application = (function() {
 
 			})(file, clientdata, iteration++);	
 		}
-
-		var applyBackgroundPosition = function(element, result) {
-
-			element.css('background-position', result.x + 'px ' + result.y + 'px');
-			// element.animate({
-			// 	'background-position-x': result.x,
-			// 	'background-position-y': result.y
-			// });
-		};
-
-		var getBackgoundPosition = function(frameNumber, width, height) {
-
-			var column = frameNumber % tiles.x;
-			var row = Math.floor(frameNumber / tiles.y);
-
-			var xPos = (column * (width / tiles.x)) * -1;
-			var yPos = (row * (height / tiles.y)) * -1;
-
-			return {
-				x: xPos,
-				y: yPos
-			}
-		};
-
-		var getRandomInt = function(min, max) {
-
-			return Math.floor(Math.random() * (max - min + 1)) + min;
-		};
 	});
+
+	var applyBackgroundPosition = function(element, result) {
+
+		element.css('background-position', result.x + 'px ' + result.y + 'px');
+		// element.animate({
+		// 	'background-position-x': result.x,
+		// 	'background-position-y': result.y
+		// });
+	};
+
+	var getBackgoundPosition = function(frameNumber, width, height) {
+
+		var column = frameNumber % tiles.x;
+		var row = Math.floor(frameNumber / tiles.y);
+
+		var xPos = (column * (width / tiles.x)) * -1;
+		var yPos = (row * (height / tiles.y)) * -1;
+
+		return {
+			x: xPos,
+			y: yPos
+		}
+	};
+
+	var getRandomInt = function(min, max) {
+
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	};
 
 })();
