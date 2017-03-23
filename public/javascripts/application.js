@@ -73,20 +73,23 @@ var Application = (function() {
 				$('#listing').append(li);
 				var caption = $('<div class="caption">' + file + '</div>');
 				li.append(caption);
-				var scrubber = $('<div class="scrubber" />');
-				li.append(scrubber);
-				var marker = $('<div class="marker" />');
-				scrubber.append(marker);
+				var videowrapper = $('<div class="videowrapper" />');
+				li.append(videowrapper);
 
 				var video = $('<video />', {
 				    id: 'video',
-				    src: 'thumbs' + clientdata.location + '/' + file,
+				    src: '/thumbs' + clientdata.location + '/' + file,
 				    type: 'video/mp4',
 				    controls: false,
 				    autoplay: false,
 				    preload: true
 				});
-				li.append(video);
+				videowrapper.append(video);
+
+				var scrubber = $('<div class="scrubber" />');
+				videowrapper.append(scrubber);
+				var marker = $('<div class="marker" />');
+				scrubber.append(marker);
 
 				video.on('loadedmetadata', function() {
 					this.currentTime = getRandomInt(1, this.duration);
@@ -98,7 +101,7 @@ var Application = (function() {
 				});
 
 				var clickOverlay = $('<div class="click-overlay" />');
-				li.append(clickOverlay);
+				videowrapper.append(clickOverlay);
 
 				clickOverlay.click(function(event) {
 						
@@ -118,16 +121,19 @@ var Application = (function() {
 						video[0].play();
 					}
 					else {
-						//window.open(clientdata.location + '/' + file);
+						window.open(clientdata.location + '/' + file);
 					}
 				});
 
 				scrubber.mousemove(function(event) {
 
-					var offset = $(this).offset();
-					var percentageOfWidth = Math.round(((event.pageX - offset.left) / $(this).width()) * 100);
-					
-					video[0].currentTime = (percentageOfWidth * .01) * video[0].duration;
+					if (video[0].paused) {
+
+						var offset = $(this).offset();
+						var percentageOfWidth = Math.round(((event.pageX - offset.left) / $(this).width()) * 100);
+						
+						video[0].currentTime = (percentageOfWidth * .01) * video[0].duration;
+					}
 				});
 
 				scrubber.click(function(event) {

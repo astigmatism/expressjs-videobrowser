@@ -99,9 +99,9 @@ exports = module.exports = {
         });
     },
 
-    getImagePath: function(partial) {
+    getMediaPath: function(partial) {
 
-        var re = new RegExp('\.(' + config.get('images.ext') + ')$');
+        var re = new RegExp('\.(' + config.get('images.ext') + '|' + config.get('videos.ext') + ')$');
         partial = partial.replace(re, '');
 
         return path.join(config.get('source'), partial);

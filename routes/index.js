@@ -5,9 +5,9 @@ const router = express.Router();
 
 //private
 
-var imagePathRegEx = new RegExp('.*\.' + config.get('images.ext') + '$'); //catches .png files in path
+var mediaPathRegEx = new RegExp('.*\.(' + config.get('images.ext') + '|' + config.get('videos.ext') + ')$'); //catches .png files in path
 
-router.get(imagePathRegEx, function(req, res, next) {
+router.get(mediaPathRegEx, function(req, res, next) {
 
 	var options = {
 		//root: __dirname + '/public/',
@@ -18,7 +18,7 @@ router.get(imagePathRegEx, function(req, res, next) {
 		}
 	};
 
-	var path = decodeURIComponent(control.getImagePath(req.path));
+	var path = decodeURIComponent(control.getMediaPath(req.path));
 
 	res.sendFile(path, options, err=> {
 		if (err) {
