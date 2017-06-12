@@ -36,8 +36,8 @@ exports = module.exports = {
                     //for each item in folder
                     async.eachSeries(items, (item, nextitem) => {
 
-                        //if begins with a dot, we pass
-                        if (item.charAt(0) === '.') {
+                        //if begins with a dot, we pass (mac) or a @ (linux)
+                        if (item.charAt(0) === '.' || item.chatAt(0) === '@') {
                             return nextitem();
                         }
 
