@@ -2,6 +2,15 @@ var Application = (function() {
 
 	$( document ).ready(function() {
 
+		//set up grid first
+		var $grid = $('#grid').isotope({
+			itemSelector: '.grid-item',
+			percentPosition: true,
+			masonry: {
+				columnWidth: '.grid-sizer'
+			}
+		})
+
 		var tiles = clientdata.tiles;
 
 		//back button
@@ -14,16 +23,17 @@ var Application = (function() {
 
 			(function(folder, clientdata) {
 
-				var li = $('<li class="folder"></li>');
+				var div = $('<div class="grid-item folder"></div>');
 
 				var caption = $('<div class="caption">' + folder + '</div>');
-				li.append(caption);
+				div.append(caption);
 
-				li.on('click touch', function () {
+				div.on('click touch', function () {
 					window.location = clientdata.location + '/' + folder;
 				});
 
-				$('#listing').append(li);
+				//$('#listing').append(div);
+				$grid.isotope('insert', div);
 
 			})(folder, clientdata);
 		}
@@ -38,17 +48,16 @@ var Application = (function() {
 				var data = clientdata.images[file];
 
 				//dom
-				var li = $('<li class="image"></li>');
-				$('#listing').append(li);
+				var div = $('<div class="grid-item image"></div>');
 				var image = $('<img src="/thumbs' + clientdata.location + '/' + file + '" />');
-				li.append(image);
+				div.append(image);
 				var clickOverlay = $('<div class="click-overlay" />');
-				li.append(clickOverlay);
+				div.append(clickOverlay);
 
 				clickOverlay.click(function(event) {
 						
 					var offset = $(this).offset();
-					var percentageOfWidth = Math.round(((event.pageX - offset.left) / li.width()) * 100);
+					var percentageOfWidth = Math.round(((event.pageX - offset.left) / div.width()) * 100);
 
 
 					if (percentageOfWidth < 25) {
@@ -59,6 +68,8 @@ var Application = (function() {
 						window.open(clientdata.location + '/' + file);
 					}
 				});
+
+				$grid.isotope('insert', div);
 
 			})(file, clientdata, iteration++);
 		};
