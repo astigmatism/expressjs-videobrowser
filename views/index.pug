@@ -2,5 +2,19 @@ extends layout
 
 block content
 	div#contents
-		div= clientdata.location
-		div#grid
+		div.grid-wrapper
+			div.titlebar
+				div.back #{"<"} Back
+				div.title= clientdata.location
+				div.gallerylink Gallery
+				div.clear
+			div#grid
+		div#image-gallery
+			div.image-container
+			div.iv-close
+			img.prev(src='/images/left.svg')
+			img.next(src='/images/right.svg')
+			div.footer-info
+				span.current
+				span /
+				span.total

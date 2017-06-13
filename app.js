@@ -11,14 +11,14 @@ var routes = require('./routes/index');
 var app = express();
 
 //port
-var useport = 8080;
+// var useport = 8080;
 
-if (process.argv.length < 2) {
-	console.log('Please enter the port number as the third parameter. Using 8080 as default');
-} else {
-	useport = process.argv[2];
-}
-app.set('port', useport);
+// if (process.argv.length < 2) {
+// 	console.log('Please enter the port number as the third parameter. Using 8080 as default');
+// } else {
+// 	useport = process.argv[2];
+// }
+// app.set('port', useport);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -52,9 +52,9 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-var server = app.listen(app.get('port'));
-server.timeout = 10800000; //3 hours repsonse timeout
+//var server = app.listen(app.get('port'));
+//server.timeout = 10800000; //3 hours repsonse timeout
 
-control.onApplicationStart(config.get('source'));
+control.onApplicationStart(config.get('mediaRoot'));
 
 module.exports = app;

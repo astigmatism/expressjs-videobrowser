@@ -5,7 +5,10 @@ const router = express.Router();
 
 //private
 
-var mediaPathRegEx = new RegExp('.*\.(' + config.get('images.ext') + '|' + config.get('videos.ext') + ')$'); //catches .png files in path
+//this old one catches images
+//var mediaPathRegEx = new RegExp('.*\.(' + config.get('images.ext') + '|' + config.get('videos.ext') + ')$'); //catches .png files in path
+
+var mediaPathRegEx = new RegExp('.*\.(' + config.get('videos.ext') + ')$'); //catches .png files in path
 
 router.get(mediaPathRegEx, function(req, res, next) {
 

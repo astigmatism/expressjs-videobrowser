@@ -1,6 +1,8 @@
 {
-	"source": "../test videos/",
-	"thumbFolder": "./public/thumbs",
+	"mediaRoot": "public/media",
+	"thumbRoot": "public/thumbs",
+	"webThumbRoot": "/thumbs",
+	"webMediaRoot": "/media",
 	"images": {
 		"ext": "png"
 	},

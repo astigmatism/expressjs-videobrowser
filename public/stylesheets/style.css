@@ -1,26 +1,61 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  font-family: 'Ubuntu', sans-serif;
+  color: #CCC;
+
+	width:100%;
+	background: linear-gradient(180deg, #333 0%, #444 51%, #333 75%);
+	opacity:0.95;
+	background-repeat: repeat-x;
+	background-color: #333;
+}
+
+.titlebar * {
+	padding: 10px;
+	font-size: 20px;
+}
+
+.title {
+	float: left;
+}
+
+.back {
+	float: left;
+	padding: 10px;
+	width: 100px;
+	cursor: pointer;
+}
+
+.gallerylink {
+	display: none;
+	float: right;
+	cursor: pointer;
 }
 
 a {
   color: #00B7FF;
 }
 
-.grid-item {
-	width: 320px;
-	min-height: 240px;
-	float: left;
-	margin: 5px;
+.grid-wrapper {
+	margin: 10px;
 }
 
-#back {
-	width: 160px;
+.grid-item {
+	margin: 2px;
+}
+
+.gallery {
+	width: 240px;
 	border: solid #ccc 2px;
+	height: 240px;
 }
 
 .folder {
 	border: solid #ccc 2px;
+	height: 250px;
+	width: 250px;
+	cursor: pointer;
 }
 
 .video {
@@ -33,6 +68,10 @@ a {
 
 .video video {
 	width: 100%;
+}
+
+.image {
+	cursor: pointer;
 }
 
 div.click-overlay {
@@ -50,7 +89,6 @@ div.scrubber {
 	background-color: #444;
 	height: 20px;
 	width: 100%;
-	display: none;
 }
 
 div.scrubberActive {
@@ -64,3 +102,53 @@ div.scrubber div.marker {
 	background-color: white;
 	position: absolute;
 }
+
+.clear {
+	clear:both;
+}
+
+.hide {
+	display: none;
+}
+
+/* imageviewer gallery */
+#image-gallery {
+      width: 100%;
+      position: relative;
+      height: 100%;
+      background: #000;
+	  display: none;
+    }
+    #image-gallery .image-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 50px;
+    }
+    #image-gallery .prev,
+    #image-gallery .next {
+      position: absolute;
+      height: 32px;
+      margin-top: -66px;
+      top: 50%;
+    }
+    #image-gallery .prev {
+      left: 20px;
+    }
+    #image-gallery .next {
+      right: 20px;
+      cursor: pointer;
+    }
+    #image-gallery .footer-info {
+      position: absolute;
+      height: 50px;
+      width: 100%;
+      left: 0;
+      bottom: 0;
+      line-height: 50px;
+      font-size: 24px;
+      text-align: center;
+      color: white;
+      border-top: 1px solid #FFF;
+    }

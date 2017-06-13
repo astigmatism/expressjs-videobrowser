@@ -6,7 +6,10 @@ const thumbmaker = require('./thumb-maker');
 const config = require('config');
 
 //private members
-var thumbFolder = config.get('thumbFolder');
+var thumbRoot = config.get('thumbRoot');
+var mediaRoot = config.get('mediaRoot');
+var webThumbRoot = config.get('webThumbRoot');
+var webMediaRoot = config.get('webMediaRoot');
 
 //public members/methods
 exports = module.exports = {
@@ -31,7 +34,11 @@ exports = module.exports = {
 
     getDirectoryListing: function(folder, callback) {
 
-        var sourcePath = path.join(thumbFolder, folder);
+        var thumbFolder = path.join(thumbRoot, folder);
+        var mediaFolder = path.join(mediaRoot, folder);
+        var webThumbFolder = path.join(webThumbRoot, folder);
+        var webMediaFolder = path.join(webMediaRoot, folder);
+
         var listing = {
             location: folder,
             videos: {},
@@ -40,7 +47,7 @@ exports = module.exports = {
         };
 
         //get contents of folder to analyze
-        fs.readdir(sourcePath, (err, items) => {
+        fs.readdir(thumbFolder, (err, items) => {
             if (err) {
                 return callback(err);
             }
@@ -53,8 +60,12 @@ exports = module.exports = {
                     return nextitem();
                 }
 
+                //see https://nodejs.org/docs/latest/api/path.html#path_path_parse_path
+                var thumbPath = path.join(thumbFolder, item);
+                var thumbDetails = path.parse(thumbPath);
+
                 //get stats for the source item (file or folder)
-                fs.stat(path.join(sourcePath, item), (err, stats) => {
+                fs.stat(thumbPath, (err, stats) => {
                     if (err) {
                         return nextitem(err);
                     }
@@ -66,18 +77,20 @@ exports = module.exports = {
                         return nextitem();
                     }
 
-                    //what kind of file is this
-                    var ext = path.extname(item);
+                    //default set of data to return to client for use
                     var details = {
-                        filename: path.basename(item, path.extname(item))
+                        thumb: path.join(webThumbFolder, item),
+                        filename: thumbDetails.name,
+                        ext: thumbDetails.ext,
+                        media: path.join(webMediaFolder, thumbDetails.name)
                     };
                     var append = null;
 
-                    if (ext === '.' + config.get('images.ext')) {
+                    if (details.ext === '.' + config.get('images.ext')) {
                         append = listing.images;
                     }
 
-                    else if (ext === '.' + config.get('videos.ext')) {
+                    else if (details.ext === '.' + config.get('videos.ext')) {
                         append = listing.videos;
                     }
 
@@ -97,18 +110,8 @@ exports = module.exports = {
             });
 
         });
-    },
-
-    getMediaPath: function(partial) {
-
-        var re = new RegExp('\.(' + config.get('images.ext') + '|' + config.get('videos.ext') + ')$');
-        partial = partial.replace(re, '');
-
-        return path.join(config.get('source'), partial);
     }
 };
-
-//private methods
 
 var autoCapture = function(sourcePath) {
 
@@ -117,7 +120,7 @@ var autoCapture = function(sourcePath) {
         console.log('Thumb Maker task starting...');
         thumbmaker.working = true;
 
-        thumbmaker.start(sourcePath, '', thumbFolder, false, (err, data) => {
+        thumbmaker.start(sourcePath, '', thumbRoot, false, (err, data) => {
             if (err) {
                 console.log(err);
             }

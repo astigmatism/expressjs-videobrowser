@@ -6,7 +6,7 @@ const config = require('config');
 const gm = require('gm');
 
 //private
-var thumbFolder = config.get('thumbFolder');
+var thumbFolder = config.get('thumbRoot');
 
 //public
 exports = module.exports = {

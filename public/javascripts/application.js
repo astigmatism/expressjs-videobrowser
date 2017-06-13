@@ -2,20 +2,45 @@ var Application = (function() {
 
 	$( document ).ready(function() {
 
+		var $gridwrapper = $('.grid-wrapper');
+		var $title = $('.title');
+		var $back = $('.back');
+		var $gallery = $('#image-gallery');
+		var $galleryclose = $('#image-gallery .iv-close');
+		var $gallerylink = $('.gallerylink');
+
 		//set up grid first
 		var $grid = $('#grid').isotope({
 			itemSelector: '.grid-item',
-			percentPosition: true,
-			masonry: {
-				columnWidth: '.grid-sizer'
-			}
-		})
+			layoutMode: 'fitRows'
+		});
 
 		var tiles = clientdata.tiles;
 
+		//title
+		$title.on('click touch', function(event) {
+			window.refresh();
+		});
+
 		//back button
-		$('#back').on('click touch', function () {
+		$back.on('click touch', function () {
 			window.history.back();
+		});
+
+		//gallery
+		$galleryclose.on('click touch', function () {
+			$gridwrapper.show();
+			$gallery.hide();
+		});
+		$gallerylink.on('click touch', function () {
+				
+			//set height dynamically, needs an actual value not %
+			$gallery.height($(window).height());
+
+			$gallery.show();
+			$gridwrapper.hide();
+
+			Gallery(galleryImages);
 		});
 
 		//folders
@@ -32,15 +57,19 @@ var Application = (function() {
 					window.location = clientdata.location + '/' + folder;
 				});
 
-				//$('#listing').append(div);
 				$grid.isotope('insert', div);
 
 			})(folder, clientdata);
 		}
 
 		var iteration = 0;
+		var galleryImages = [];
 
 		//images
+		if (Object.keys(clientdata.images).length > 0) {
+			$gallerylink.show();
+		}
+
 		for (file in clientdata.images) {
 
 			(function(file, clientdata, iteration) {
@@ -49,24 +78,22 @@ var Application = (function() {
 
 				//dom
 				var div = $('<div class="grid-item image"></div>');
-				var image = $('<img src="/thumbs' + clientdata.location + '/' + file + '" />');
+				var image = $('<img src="' + data.thumb + '" data-high-res-src="' + data.media + '" />');
 				div.append(image);
 				var clickOverlay = $('<div class="click-overlay" />');
 				div.append(clickOverlay);
+				
+				//for gallery feature
+				galleryImages.push({
+					small: data.thumb,
+					big: data.media
+				});
 
 				clickOverlay.click(function(event) {
-						
-					var offset = $(this).offset();
-					var percentageOfWidth = Math.round(((event.pageX - offset.left) / div.width()) * 100);
-
-
-					if (percentageOfWidth < 25) {
-					}
-					else if (percentageOfWidth > 75) {	
-					}
-					else {
-						window.open(clientdata.location + '/' + file);
-					}
+					
+					//see viewer docs: http://ignitersworld.com/lab/imageViewer.html
+					var viewer = ImageViewer();
+        			viewer.show($(image).attr('src'), $(image).data('high-res-src'));
 				});
 
 				$grid.isotope('insert', div);
@@ -79,17 +106,19 @@ var Application = (function() {
 
 			(function(file, clientdata, iteration) {
 
-				var data = clientdata.images[file];
-				var li = $('<li class="video"></li>');
-				$('#listing').append(li);
+				var data = clientdata.videos[file];
+				var $gi = $('<div class="grid-item video" />');
+
+				$grid.isotope('insert', $gi);
+
 				var caption = $('<div class="caption">' + file + '</div>');
-				li.append(caption);
+				//$gi.append(caption);
 				var videowrapper = $('<div class="videowrapper" />');
-				li.append(videowrapper);
+				$gi.append(videowrapper);
 
 				var video = $('<video />', {
 				    id: 'video',
-				    src: '/thumbs' + clientdata.location + '/' + file,
+				    src: data.thumb,
 				    type: 'video/mp4',
 				    controls: false,
 				    autoplay: false,
@@ -97,9 +126,10 @@ var Application = (function() {
 				});
 				videowrapper.append(video);
 
-				var scrubber = $('<div class="scrubber" />');
+				var scrubber = $('<div class="scrubber scrubberActive" />');
 				videowrapper.append(scrubber);
 				var marker = $('<div class="marker" />');
+				
 				scrubber.append(marker);
 
 				video.on('loadedmetadata', function() {
@@ -117,22 +147,28 @@ var Application = (function() {
 				clickOverlay.click(function(event) {
 						
 					var offset = $(this).offset();
-					var percentageOfWidth = Math.round(((event.pageX - offset.left) / li.width()) * 100);
+					var percentageOfWidth = Math.round(((event.pageX - offset.left) / $gi.width()) * 100);
 
 					if (percentageOfWidth < 25) {
 
 						//back 5 seconds
 						video[0].currentTime = (video[0].currentTime - 5) > 0 ? video[0].currentTime - 5 : video[0].currentTime;
 						video[0].play();
+						video.prop('muted', true);
 					}
 					else if (percentageOfWidth > 75) {	
 					
 						//back 5 seconds
 						video[0].currentTime = (video[0].currentTime + 5) < video[0].duration ? video[0].currentTime + 5 : video[0].currentTime;
 						video[0].play();
+						video.prop('muted', true);
 					}
 					else {
-						window.open(clientdata.location + '/' + file);
+						if (video[0].paused) {
+							window.open(data.media);
+						} else {
+							scrubber.click();
+						}
 					}
 				});
 
@@ -150,22 +186,12 @@ var Application = (function() {
 				scrubber.click(function(event) {
 					if (video[0].paused) {
 						video[0].play();
+						video.prop('muted', true);
 					}
 					else {
 						video[0].pause();
 					}
 				});
-
-				li.mouseover(function(event) {
-
-					scrubber.addClass('scrubberActive');
-				});
-
-				li.mouseleave(function(event) {
-
-					scrubber.removeClass('scrubberActive');
-				});
-
 
 			})(file, clientdata, iteration++);
 		};
@@ -288,6 +314,10 @@ var Application = (function() {
 
 			})(file, clientdata, iteration++);	
 		}
+
+		$grid.imagesLoaded().progress( function() {
+			$grid.isotope('layout');
+		});
 	});
 
 	var applyBackgroundPosition = function(element, result) {
@@ -317,5 +347,38 @@ var Application = (function() {
 
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	};
+
+	var Gallery = function(images) {
+	
+		var curImageIdx = 1,
+			total = images.length;
+		var wrapper = $('#image-gallery'),
+			curSpan = wrapper.find('.current');
+		var viewer = ImageViewer(wrapper.find('.image-container'));
+	
+		//display total count
+		wrapper.find('.total').html(total);
+	
+		function showImage(){
+			var imgObj = images[curImageIdx - 1];
+			viewer.load(imgObj.small, imgObj.big);
+			curSpan.html(curImageIdx);
+		}
+	
+		wrapper.find('.next').click(function(){
+			curImageIdx++;
+			if(curImageIdx > total) curImageIdx = 1;
+			showImage();
+		});
+	
+		wrapper.find('.prev').click(function(){
+			curImageIdx--;
+			if(curImageIdx < 0) curImageIdx = total;
+			showImage();
+		});
+	
+		//initially show image
+		showImage();
+	}
 
 })();
