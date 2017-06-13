@@ -425,6 +425,7 @@ var Application = (function() {
 
 		//initially show image
 		showImage();
+		slideshow();
 	}
 
 })();
