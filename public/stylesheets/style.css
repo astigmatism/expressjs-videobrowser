@@ -1,8 +1,8 @@
 body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Ubuntu', sans-serif;
-  color: #CCC;
+	margin: 0;
+	padding: 0;
+	font-family: 'Ubuntu', sans-serif;
+	color: #CCC;
 
 	width:100%;
 	background: linear-gradient(180deg, #333 0%, #444 51%, #333 75%);
@@ -45,17 +45,18 @@ a {
 	margin: 2px;
 }
 
-.gallery {
-	width: 240px;
-	border: solid #ccc 2px;
-	height: 240px;
+.preview-grid-item {
+	width: 150px;
+	height: 140px;
 }
 
 .folder {
-	border: solid #ccc 2px;
-	height: 250px;
-	width: 250px;
+	border: solid #777 2px;
+	background: linear-gradient(180deg, #555 0%, #666 51%, #555 75%);
+	height: 300px;
+	width: 300px;
 	cursor: pointer;
+	padding: 5px;
 }
 
 .video {

@@ -6,18 +6,17 @@ var Application = (function() {
 		var $title = $('.title');
 		var $back = $('.back');
 		var $gallery = $('#image-gallery');
-		var $slideshowLink = $('.gallerylink');
 		var $galleryclose = $('#image-gallery .iv-close');
-
-		//set up grid first
-		var $grid = $('#grid').isotope({
-			itemSelector: '.grid-item',
-			layoutMode: 'masonry'
-		});
 
 		var tiles = clientdata.tiles;
 		var iteration = 0;
 		var galleryImages = [];
+
+		//main grid
+		var $grid = $('#grid').packery({
+  			itemSelector: '.grid-item',
+			transitionDuration: 0
+		});
 
 		//title
 		$title.on('click touch', function(event) {
@@ -30,10 +29,6 @@ var Application = (function() {
 		});
 
 		//gallery
-		$slideshowLink.on('click touch', function () {
-			RevealGallery($gallery, $gridwrapper, galleryImages, true, 1, true);
-		});
-
 		$galleryclose.on('click touch', function () {
 			RevealGallery($gallery, $gridwrapper, galleryImages, false);
 		});
@@ -42,6 +37,8 @@ var Application = (function() {
 		for (folder in clientdata.folders) {
 
 			(function(folder, clientdata) {
+
+				var data = clientdata.folders[folder];
 
 				var $gi = $('<div class="grid-item folder"></div>');
 
@@ -52,16 +49,40 @@ var Application = (function() {
 					window.location = clientdata.location + '/' + folder;
 				});
 
-				$grid.isotope('insert', $gi);
+				$grid.append($gi).packery('appended', $gi);
+
+				//image previews for folder
+				if (data.preview.length > 0) {
+					
+					//make new preview grid
+					var $innerGrid = $('<div class="preview-grid"></div>');
+					$gi.append($innerGrid);
+
+					var $previewGrid = $innerGrid.packery({
+						itemSelector: '.preview-grid-item',
+						transitionDuration: 0
+					});
+
+					for (var i = 0; i < data.preview.length; ++i) {
+						var $previewImageGridItem = $('<div class="preview-grid-item"></div>');
+						var $previewImage = $('<img src="' + data.preview[i].thumb + '" />');
+						
+						$previewImageGridItem.append($previewImage);
+						$previewGrid.append($previewImageGridItem).packery('appended', $previewImageGridItem);
+					} 
+
+					$previewGrid.imagesLoaded().progress( function() {
+						$previewGrid.packery();
+						$('.preview-grid-item').imagefill({
+							runOnce: true
+						});
+					});
+				}
 
 			})(folder, clientdata);
 		}
 
 		//images
-		if (Object.keys(clientdata.images).length > 0) {
-			$slideshowLink.show();
-		}
-
 		for (file in clientdata.images) {
 
 			(function(file, clientdata, iteration) {
@@ -87,7 +108,7 @@ var Application = (function() {
 					RevealGallery($gallery, $gridwrapper, galleryImages, true, galleryIndex, false);
 				});
 
-				$grid.isotope('insert', div);
+				$grid.append(div).packery('appended', div);
 
 			})(file, clientdata, iteration++);
 		};
@@ -100,7 +121,7 @@ var Application = (function() {
 				var data = clientdata.videos[file];
 				var $gi = $('<div class="grid-item video" />');
 
-				$grid.isotope('insert', $gi);
+				$grid.append($gi).packery('appended', $gi);
 
 				var caption = $('<div class="caption">' + file + '</div>');
 				//$gi.append(caption);
@@ -307,7 +328,7 @@ var Application = (function() {
 		}
 
 		$grid.imagesLoaded().progress( function() {
-			$grid.isotope('layout');
+			$grid.packery();
 		});
 	});
 

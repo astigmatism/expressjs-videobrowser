@@ -10,6 +10,7 @@ var thumbRoot = config.get('thumbRoot');
 var mediaRoot = config.get('mediaRoot');
 var webThumbRoot = config.get('webThumbRoot');
 var webMediaRoot = config.get('webMediaRoot');
+var numberOfImagePreviewsForFolder = 4;
 
 //public members/methods
 exports = module.exports = {
@@ -70,13 +71,6 @@ exports = module.exports = {
                         return nextitem(err);
                     }
 
-                    //if a folder, recurrsively proceed into it
-                    if (stats.isDirectory()) {
-
-                        listing.folders[item] = {};
-                        return nextitem();
-                    }
-
                     //default set of data to return to client for use
                     var details = {
                         thumb: path.join(webThumbFolder, item),
@@ -84,22 +78,50 @@ exports = module.exports = {
                         ext: thumbDetails.ext,
                         media: path.join(webMediaFolder, thumbDetails.name)
                     };
-                    var append = null;
 
-                    if (details.ext === '.' + config.get('images.ext')) {
-                        append = listing.images;
+                    //if a folder
+                    if (stats.isDirectory()) {
+
+                        var dirListing = exports.getDirectoryListing(folder + '/' + item, (err, dirlisting) => {;
+                            if (err) {
+                                return nextitem(err);
+                            }
+
+                            var shuffled = shuffle(Object.keys(dirlisting.images));
+
+                            details.preview = [];
+
+                            for (var i = 0, len = shuffled.length; i < len && i < numberOfImagePreviewsForFolder; ++i)
+                            {
+                                details.preview.push(dirlisting.images[shuffled[i]]);
+                            }
+
+                            listing.folders[item] = details;
+                            return nextitem();
+                        });
                     }
 
-                    else if (details.ext === '.' + config.get('videos.ext')) {
-                        append = listing.videos;
-                    }
-
+                    //not a folder
                     else {
-                        return nextitem();
-                    }
 
-                    append[item] = details;
-                    nextitem();
+                        var append = null;
+
+                        if (details.ext === '.' + config.get('images.ext')) {
+                            append = listing.images;
+                        }
+
+                        else if (details.ext === '.' + config.get('videos.ext')) {
+                            append = listing.videos;
+                        }
+
+                        //if the file isn't something we can match against, we don't show it
+                        else {
+                            return nextitem();
+                        }
+
+                        append[item] = details;
+                        nextitem();
+                    }
                 });
 
             }, err => {
@@ -132,3 +154,17 @@ var autoCapture = function(sourcePath) {
         console.log('Thumb Maker task alreday working...');
     }
 };
+
+var shuffle = function(array) {
+    var i = 0;
+    var j = 0;
+    var temp = null;
+
+    for (i = array.length - 1; i > 0; i -= 1) {
+        j = Math.floor(Math.random() * (i + 1));
+        temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
