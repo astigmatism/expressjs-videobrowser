@@ -12,7 +12,7 @@ var Application = (function() {
 		//set up grid first
 		var $grid = $('#grid').isotope({
 			itemSelector: '.grid-item',
-			layoutMode: 'fitRows'
+			layoutMode: 'masonry'
 		});
 
 		var tiles = clientdata.tiles;
