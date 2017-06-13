@@ -6,7 +6,7 @@ var Application = (function() {
 		var $title = $('.title');
 		var $back = $('.back');
 		var $gallery = $('#image-gallery');
-		var $gallerylink = $('.gallerylink');
+		var $slideshowLink = $('.gallerylink');
 		var $galleryclose = $('#image-gallery .iv-close');
 
 		//set up grid first
@@ -16,6 +16,8 @@ var Application = (function() {
 		});
 
 		var tiles = clientdata.tiles;
+		var iteration = 0;
+		var galleryImages = [];
 
 		//title
 		$title.on('click touch', function(event) {
@@ -28,21 +30,12 @@ var Application = (function() {
 		});
 
 		//gallery
-		$gallerylink.on('click touch', function () {
-				
-			//set height dynamically, needs an actual value not %
-			$gallery.height($(window).height());
-
-			$gallery.show();
-			$gridwrapper.hide();
-
-			Gallery(galleryImages);
+		$slideshowLink.on('click touch', function () {
+			RevealGallery($gallery, $gridwrapper, galleryImages, true, 1, true);
 		});
 
 		$galleryclose.on('click touch', function () {
-			$gridwrapper.show();
-			$gallery.hide();
-			$(window).off('keydown');
+			RevealGallery($gallery, $gridwrapper, galleryImages, false);
 		});
 
 		//folders
@@ -50,26 +43,23 @@ var Application = (function() {
 
 			(function(folder, clientdata) {
 
-				var div = $('<div class="grid-item folder"></div>');
+				var $gi = $('<div class="grid-item folder"></div>');
 
 				var caption = $('<div class="caption">' + folder + '</div>');
-				div.append(caption);
+				$gi.append(caption);
 
-				div.on('click touch', function () {
+				$gi.on('click touch', function () {
 					window.location = clientdata.location + '/' + folder;
 				});
 
-				$grid.isotope('insert', div);
+				$grid.isotope('insert', $gi);
 
 			})(folder, clientdata);
 		}
 
-		var iteration = 0;
-		var galleryImages = [];
-
 		//images
 		if (Object.keys(clientdata.images).length > 0) {
-			$gallerylink.show();
+			$slideshowLink.show();
 		}
 
 		for (file in clientdata.images) {
@@ -91,11 +81,10 @@ var Application = (function() {
 					big: data.media
 				});
 
+				var galleryIndex = galleryImages.length; //the current length is the index of this image
+
 				clickOverlay.click(function(event) {
-					
-					//see viewer docs: http://ignitersworld.com/lab/imageViewer.html
-					var viewer = ImageViewer();
-        			viewer.show($(image).attr('src'), $(image).data('high-res-src'));
+					RevealGallery($gallery, $gridwrapper, galleryImages, true, galleryIndex, false);
 				});
 
 				$grid.isotope('insert', div);
@@ -322,6 +311,25 @@ var Application = (function() {
 		});
 	});
 
+	var RevealGallery = function($gallery, $gridwrapper, galleryImages, showGallery, startAt, enableSlideShow) {
+		
+		if (showGallery)
+		{
+			//set height dynamically, needs an actual value not %
+			$gallery.height($(window).height());
+
+			$gallery.show();
+			$gridwrapper.hide();
+
+			Gallery(galleryImages, startAt, enableSlideShow);
+		}
+		else {
+			$gridwrapper.show();
+			$gallery.hide();
+			$(window).off('keydown');
+		}
+	};
+
 	var applyBackgroundPosition = function(element, result) {
 
 		element.css('background-position', result.x + 'px ' + result.y + 'px');
@@ -350,12 +358,12 @@ var Application = (function() {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	};
 
-	var Gallery = function(images) {
+	var Gallery = function(images, startAt, slideshowEnabled) {
 		
-		var curImageIdx = 1,
-			total = images.length;
-		var wrapper = $('#image-gallery'),
-			curSpan = wrapper.find('.current');
+		var curImageIdx = startAt;
+		var total = images.length;
+		var wrapper = $('#image-gallery');
+		var curSpan = wrapper.find('.current');
 		var viewer = ImageViewer(wrapper.find('.image-container'));
 		var slideshowtimer = null;
 	
@@ -425,7 +433,10 @@ var Application = (function() {
 
 		//initially show image
 		showImage();
-		slideshow();
+
+		if (slideshowEnabled) {
+			slideshow();
+		}
 	}
 
 })();
