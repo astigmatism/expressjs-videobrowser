@@ -48,8 +48,8 @@ exports = module.exports = {
             //for each item in folder
             async.eachSeries(items, (item, nextitem) => {
 
-                //if begins with a dot, we pass
-                if (item.charAt(0) === '.') {
+                //if begins with a dot, we pass (mac) or (@) docker unbuntu
+                if (item.charAt(0) === '.' || item.charAt(0) === '@') {
                     return nextitem();
                 }
 
