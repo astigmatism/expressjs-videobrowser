@@ -6,8 +6,8 @@ var Application = (function() {
 		var $title = $('.title');
 		var $back = $('.back');
 		var $gallery = $('#image-gallery');
-		var $galleryclose = $('#image-gallery .iv-close');
 		var $gallerylink = $('.gallerylink');
+		var $galleryclose = $('#image-gallery .iv-close');
 
 		//set up grid first
 		var $grid = $('#grid').isotope({
@@ -28,10 +28,6 @@ var Application = (function() {
 		});
 
 		//gallery
-		$galleryclose.on('click touch', function () {
-			$gridwrapper.show();
-			$gallery.hide();
-		});
 		$gallerylink.on('click touch', function () {
 				
 			//set height dynamically, needs an actual value not %
@@ -41,6 +37,12 @@ var Application = (function() {
 			$gridwrapper.hide();
 
 			Gallery(galleryImages);
+		});
+
+		$galleryclose.on('click touch', function () {
+			$gridwrapper.show();
+			$gallery.hide();
+			$(window).off('keydown');
 		});
 
 		//folders
@@ -349,12 +351,13 @@ var Application = (function() {
 	};
 
 	var Gallery = function(images) {
-	
+		
 		var curImageIdx = 1,
 			total = images.length;
 		var wrapper = $('#image-gallery'),
 			curSpan = wrapper.find('.current');
 		var viewer = ImageViewer(wrapper.find('.image-container'));
+		var slideshowtimer = null;
 	
 		//display total count
 		wrapper.find('.total').html(total);
@@ -364,19 +367,62 @@ var Application = (function() {
 			viewer.load(imgObj.small, imgObj.big);
 			curSpan.html(curImageIdx);
 		}
-	
-		wrapper.find('.next').click(function(){
+
+		var next = function() {
 			curImageIdx++;
 			if(curImageIdx > total) curImageIdx = 1;
 			showImage();
+		};
+
+		var prev = function() {
+			curImageIdx--;
+			if(curImageIdx < 1) curImageIdx = total;
+			showImage();
+		};
+	
+		wrapper.find('.next').click(function(){
+			next();
 		});
 	
 		wrapper.find('.prev').click(function(){
-			curImageIdx--;
-			if(curImageIdx < 0) curImageIdx = total;
-			showImage();
+			prev();
 		});
-	
+
+		wrapper.find('.slideshowlabel').click(function() {
+			slideshow();
+		});
+
+		var slideshow = function() {
+			if (slideshowtimer) {
+				clearInterval(slideshowtimer);
+				slideshowtimer = null;
+				wrapper.find('.slideshowlabel').text('Start');
+			}
+			else {
+				slideshowtimer = setInterval(function() {
+					next();
+				}, 2000);
+				wrapper.find('.slideshowlabel').text('Stop');
+			}
+		};
+
+		//keypress events
+		$(window).keydown(function(event) {
+			event.preventDefault();
+			
+			switch(event.which) {
+				case 37:
+					prev();
+					break;
+				case 39:
+					next();
+					break;
+				case 32:
+					slideshow();
+					break;
+			}
+		});
+
 		//initially show image
 		showImage();
 	}
