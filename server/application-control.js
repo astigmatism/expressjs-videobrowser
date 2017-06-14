@@ -169,7 +169,7 @@ var FindPreviewImages = function(directory, callback) {
                 
                 FindPreviewImages(childFolder, (err, folderpreviews) => {
 
-                    previews = previews.concat(shuffle(folderpreviews));
+                    childPreviews = childPreviews.concat(folderpreviews);
                     return nextitem();
                 });
 
@@ -177,7 +177,10 @@ var FindPreviewImages = function(directory, callback) {
                 if (err) {
                     return callback(err);
                 }
+                //merge local and child previews
+                previews = shuffle(childPreviews);
                 previews = previews.slice(0, numberOfImagePreviewsForFolder);
+
                 return callback(null, previews);
             });
         }
