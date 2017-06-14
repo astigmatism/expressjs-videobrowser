@@ -112,6 +112,10 @@ div.scrubber div.marker {
 	display: none;
 }
 
+.invisible {
+	visibility: hidden;
+}
+
 /* imageviewer gallery */
 #image-gallery {
       width: 100%;

@@ -64,7 +64,7 @@ var Application = (function() {
 					});
 
 					for (var i = 0; i < data.preview.length; ++i) {
-						var $previewImageGridItem = $('<div class="preview-grid-item"></div>');
+						var $previewImageGridItem = $('<div class="preview-grid-item invisible"></div>');
 						var $previewImage = $('<img src="' + data.preview[i].thumb + '" />');
 						
 						$previewImageGridItem.append($previewImage);
@@ -76,6 +76,7 @@ var Application = (function() {
 						$('.preview-grid-item').imagefill({
 							runOnce: true
 						});
+						$('.preview-grid-item').removeClass('invisible');
 					});
 				}
 
@@ -90,11 +91,11 @@ var Application = (function() {
 				var data = clientdata.images[file];
 
 				//dom
-				var div = $('<div class="grid-item image"></div>');
-				var image = $('<img src="' + data.thumb + '" data-high-res-src="' + data.media + '" />');
-				div.append(image);
-				var clickOverlay = $('<div class="click-overlay" />');
-				div.append(clickOverlay);
+				var $gi = $('<div class="grid-item image invisible"></div>');
+				var $image = $('<img src="' + data.thumb + '" data-high-res-src="' + data.media + '" />');
+				$gi.append($image);
+				var $clickOverlay = $('<div class="click-overlay" />');
+				$gi.append($clickOverlay);
 				
 				//for gallery feature
 				galleryImages.push({
@@ -104,11 +105,11 @@ var Application = (function() {
 
 				var galleryIndex = galleryImages.length; //the current length is the index of this image
 
-				clickOverlay.click(function(event) {
+				$clickOverlay.click(function(event) {
 					RevealGallery($gallery, $gridwrapper, galleryImages, true, galleryIndex, false);
 				});
 
-				$grid.append(div).packery('appended', div);
+				$grid.append($gi).packery('appended', $gi);
 
 			})(file, clientdata, iteration++);
 		};
@@ -329,6 +330,7 @@ var Application = (function() {
 
 		$grid.imagesLoaded().progress( function() {
 			$grid.packery();
+			$('.grid-item').removeClass('invisible');
 		});
 	});
 

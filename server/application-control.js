@@ -82,20 +82,10 @@ exports = module.exports = {
                     //if a folder
                     if (stats.isDirectory()) {
 
-                        var dirListing = exports.getDirectoryListing(folder + '/' + item, (err, dirlisting) => {;
-                            if (err) {
-                                return nextitem(err);
-                            }
-
-                            var shuffled = shuffle(Object.keys(dirlisting.images));
-
-                            details.preview = [];
-
-                            for (var i = 0, len = shuffled.length; i < len && i < numberOfImagePreviewsForFolder; ++i)
-                            {
-                                details.preview.push(dirlisting.images[shuffled[i]]);
-                            }
-
+                        FindPreviewImages(path.join(folder, item), function(err, previews) {
+                            
+                            details.preview = previews;
+                            
                             listing.folders[item] = details;
                             return nextitem();
                         });
@@ -133,6 +123,58 @@ exports = module.exports = {
 
         });
     }
+};
+
+var FindPreviewImages = function(directory, callback, previews) {
+
+    previews = previews || [];
+
+    console.log('getting previews from: ' + directory);
+
+    var dirListing = exports.getDirectoryListing(directory, (err, listing) => {
+
+        //image previews
+        var imageKeys = Object.keys(listing.images);
+        if (imageKeys.length > 0) {
+
+            var shuffled = shuffle(imageKeys); //randomize
+            for (var i = 0, len = shuffled.length; i < len && i < numberOfImagePreviewsForFolder; ++i)
+            {
+                previews.push(listing.images[shuffled[i]]);
+            }
+        }
+
+        //video previews?
+
+        //folder
+        var folderKeys = Object.keys(listing.folders);
+        if (previews.length < numberOfImagePreviewsForFolder && folderKeys.length > 0) {
+
+            async.eachSeries(folderKeys, (folderKey, nextitem) => {
+                
+                FindPreviewImages(directory + '/' + folderKey, function(err, previews) {
+
+                    if (previews.length >= numberOfImagePreviewsForFolder) {
+
+                        callback(null, previews);
+
+                    } else {
+                        return nextitem();
+                    }
+
+                }, previews);
+
+            }, err => {
+                if (err) {
+                    return callback(err);
+                }
+                return callback(null, previews);
+            });
+        }
+        else {
+            return callback(null, previews);
+        }
+    });
 };
 
 var autoCapture = function(sourcePath) {
