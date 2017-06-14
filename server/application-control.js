@@ -169,15 +169,12 @@ var FindPreviewImages = function(directory, callback) {
                 
                 FindPreviewImages(childFolder, (err, folderpreviews) => {
 
-                    for (var i = 0, len = folderpreviews.length; i < len && previews.length < numberOfImagePreviewsForFolder; ++i) {
-                        previews.push(folderpreviews[i]);
-                    }
+                    previews = previews.concat(shuffle(folderpreviews));
 
-                    //if full, leave
                     if (previews.length > numberOfImagePreviewsForFolder) {
+                        previews = previews.slice(0, numberOfImagePreviewsForFolder);
                         return callback(null, previews);
                     }
-                    //otherwise keep building in sibling folders
                     else {
                         return nextitem();
                     }
@@ -187,7 +184,7 @@ var FindPreviewImages = function(directory, callback) {
                 if (err) {
                     return callback(err);
                 }
-                //previews = previews.slice(0, numberOfImagePreviewsForFolder);
+                previews = previews.slice(0, numberOfImagePreviewsForFolder);
                 return callback(null, previews);
             });
         }
