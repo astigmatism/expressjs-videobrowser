@@ -117,8 +117,6 @@ var Application = (function() {
 				var data = clientdata.videos[file];
 				var $gi = $('<div class="grid-item video" />');
 
-				$grid.append($gi).packery('appended', $gi);
-
 				var caption = $('<div class="caption">' + file + '</div>');
 				//$gi.append(caption);
 				var videowrapper = $('<div class="videowrapper" />');
@@ -200,6 +198,8 @@ var Application = (function() {
 						video[0].pause();
 					}
 				});
+
+				$grid.append($gi).packery('appended', $gi);
 
 			})(file, clientdata, iteration++);
 		};
