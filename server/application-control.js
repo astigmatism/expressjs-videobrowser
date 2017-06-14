@@ -181,7 +181,7 @@ var FindPreviewImages = function(directory, callback) {
                     return callback(err);
                 }
                 //merge local and child previews
-                previews = previews.concat(childPreviews);
+                preview = suffle(childPreviews); //this is important!
                 previews = previews.slice(0, numberOfImagePreviewsForFolder);
 
                 return callback(null, previews);
