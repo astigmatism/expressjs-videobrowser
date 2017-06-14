@@ -135,32 +135,23 @@ var FindPreviewImages = function(directory, callback, previews) {
 
         //image previews
         var imageKeys = Object.keys(listing.images);
-        if (imageKeys.length > 0) {
-
-            var shuffled = shuffle(imageKeys); //randomize
-            for (var i = 0, len = shuffled.length; i < len && i < numberOfImagePreviewsForFolder; ++i)
-            {
-                previews.push(listing.images[shuffled[i]]);
-            }
+        for (var i = 0, len = shuffled.length; i < len; ++i) {
+            previews.push(listing.images[shuffled[i]]);
         }
 
         //video previews?
 
         //folder
         var folderKeys = Object.keys(listing.folders);
-        if (previews.length < numberOfImagePreviewsForFolder && folderKeys.length > 0) {
+        if (folderKeys.length > 0) {
 
             async.eachSeries(folderKeys, (folderKey, nextitem) => {
                 
-                FindPreviewImages(directory + '/' + folderKey, function(err, previews) {
+                FindPreviewImages(directory + '/' + folderKey, function(err, folderpreviews) {
 
-                    if (previews.length >= numberOfImagePreviewsForFolder) {
+                    previews = previews.concat(folderpreviews);
 
-                        callback(null, previews);
-
-                    } else {
-                        return nextitem();
-                    }
+                    return nextitem();
 
                 }, previews);
 
