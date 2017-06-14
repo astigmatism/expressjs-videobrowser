@@ -139,9 +139,7 @@ var GetFolderListing = function(folder, callback) {
 
 var FindPreviewImages = function(directory, callback) {
 
-    previews = [];
-
-    console.log('getting previews from: ' + directory);
+    var previews = [];
 
     GetFolderListing(directory, (err, listing) => {
 
@@ -156,7 +154,7 @@ var FindPreviewImages = function(directory, callback) {
         for (var i = 0, len = imageKeys.length; i < len && i < numberOfImagePreviewsForFolder; ++i) {
             previews.push(listing.images[imageKeys[i]]);
         }
-
+        
         //video previews?
 
         //child folders: so we only want to start looking in child folders if we dont have enough previews.
@@ -168,9 +166,8 @@ var FindPreviewImages = function(directory, callback) {
             async.eachSeries(folderKeys, (folderKey, nextitem) => {
 
                 var childFolder = path.join(directory, folderKey);
-                console.log('stepping into child: ' + childFolder);
                 
-                FindPreviewImages(childFolder, function(err, folderpreviews) {
+                FindPreviewImages(childFolder, (err, folderpreviews) => {
 
                     childPreviews = childPreviews.concat(folderpreviews);
                     return nextitem();
@@ -181,7 +178,7 @@ var FindPreviewImages = function(directory, callback) {
                     return callback(err);
                 }
                 //merge local and child previews
-                preview = shuffle(childPreviews); //this is important!
+                previews = previews.concat(shuffle(childPreviews));
                 previews = previews.slice(0, numberOfImagePreviewsForFolder);
 
                 return callback(null, previews);
@@ -190,7 +187,7 @@ var FindPreviewImages = function(directory, callback) {
         else {
             return callback(null, previews);
         }
-    }, true); //true says we only want the folders listing, no functionality
+    });
 };
 
 var autoCapture = function(sourcePath) {
