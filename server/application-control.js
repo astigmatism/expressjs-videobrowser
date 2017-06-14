@@ -33,85 +33,22 @@ exports = module.exports = {
         //that.autoCapture(sourcePath);
     },
 
-    getDirectoryListing: function(folder, callback) {
+    ProcessLocation: function(location, callback) {
 
-        var thumbFolder = path.join(thumbRoot, folder);
-        var mediaFolder = path.join(mediaRoot, folder);
-        var webThumbFolder = path.join(webThumbRoot, folder);
-        var webMediaFolder = path.join(webMediaRoot, folder);
-
-        var listing = {
-            location: folder,
-            videos: {},
-            images: {},
-            folders: {}
-        };
-
-        //get contents of folder to analyze
-        fs.readdir(thumbFolder, (err, items) => {
+        GetFolderListing(location, (err, listing) => {
             if (err) {
                 return callback(err);
             }
-            
-            //for each item in folder
-            async.eachSeries(items, (item, nextitem) => {
 
-                //if begins with a dot, we pass (mac) or (@) docker unbuntu
-                if (item.charAt(0) === '.' || item.charAt(0) === '@') {
-                    return nextitem();
-                }
+            //find previews for folders
+            var folderKeys = Object.keys(listing.folders);
+            async.eachSeries(folderKeys, (folder, nextfolder) => {
 
-                //see https://nodejs.org/docs/latest/api/path.html#path_path_parse_path
-                var thumbPath = path.join(thumbFolder, item);
-                var thumbDetails = path.parse(thumbPath);
-
-                //get stats for the source item (file or folder)
-                fs.stat(thumbPath, (err, stats) => {
-                    if (err) {
-                        return nextitem(err);
-                    }
-
-                    //default set of data to return to client for use
-                    var details = {
-                        thumb: path.join(webThumbFolder, item),
-                        filename: thumbDetails.name,
-                        ext: thumbDetails.ext,
-                        media: path.join(webMediaFolder, thumbDetails.name)
-                    };
-
-                    //if a folder
-                    if (stats.isDirectory()) {
-
-                        FindPreviewImages(path.join(folder, item), function(err, previews) {
-                            
-                            details.preview = previews;
-                            
-                            listing.folders[item] = details;
-                            return nextitem();
-                        });
-                    }
-
-                    //not a folder
-                    else {
-
-                        var append = null;
-
-                        if (details.ext === '.' + config.get('images.ext')) {
-                            append = listing.images;
-                        }
-
-                        else if (details.ext === '.' + config.get('videos.ext')) {
-                            append = listing.videos;
-                        }
-
-                        //if the file isn't something we can match against, we don't show it
-                        else {
-                            return nextitem();
-                        }
-
-                        append[item] = details;
-                        nextitem();
-                    }
+                FindPreviewImages(path.join(location, folder), function(err, previews) {
+                    
+                    //add preview data to listing
+                    listing.folders[folder].preview = previews;
+                    return nextfolder();
                 });
 
             }, err => {
@@ -120,52 +57,140 @@ exports = module.exports = {
                 }
                 callback(null, listing); //complete!
             });
-
         });
     }
 };
 
-var FindPreviewImages = function(directory, callback, previews) {
+var GetFolderListing = function(folder, callback) {
 
-    previews = previews || [];
+    var thumbFolder = path.join(thumbRoot, folder);
+    var mediaFolder = path.join(mediaRoot, folder);
+    var webThumbFolder = path.join(webThumbRoot, folder);
+    var webMediaFolder = path.join(webMediaRoot, folder);
+
+    var listing = {
+        location: folder,
+        videos: {},
+        images: {},
+        folders: {}
+    };
+
+    //get contents of folder to analyze
+    fs.readdir(thumbFolder, (err, items) => {
+        if (err) {
+            return callback(err);
+        }
+        
+        //for each item in folder
+        async.eachSeries(items, (item, nextitem) => {
+
+            //if begins with a dot, we pass (mac) or (@) docker unbuntu
+            if (item.charAt(0) === '.' || item.charAt(0) === '@') {
+                return nextitem();
+            }
+
+            //see https://nodejs.org/docs/latest/api/path.html#path_path_parse_path
+            var thumbPath = path.join(thumbFolder, item);
+            var thumbDetails = path.parse(thumbPath);
+
+            //default set of data to include
+            var details = {
+                thumb: path.join(webThumbFolder, item),
+                filename: thumbDetails.name,
+                ext: thumbDetails.ext,
+                media: path.join(webMediaFolder, thumbDetails.name)
+            };
+
+            //get stats for the source item (file or folder)
+            fs.stat(thumbPath, (err, stats) => {
+                if (err) {
+                    return nextitem(err);
+                }
+
+                //if a folder
+                if (stats.isDirectory()) {
+                    listing.folders[item] = details;
+                }
+
+                //is a file
+                else {
+
+                    //is an image
+                    if (details.ext === '.' + config.get('images.ext')) {
+                        listing.images[item] = details;
+                    }
+
+                    //is a video
+                    else if (details.ext === '.' + config.get('videos.ext')) {
+                        listing.videos[item] = details;
+                    }
+                }
+                return nextitem();
+            });
+
+        }, err => {
+            if (err) {
+                return callback(err);
+            }
+            callback(null, listing); //complete!
+        });
+    });
+};
+
+var FindPreviewImages = function(directory, callback) {
+
+    previews = [];
 
     console.log('getting previews from: ' + directory);
 
-    var dirListing = exports.getDirectoryListing(directory, (err, listing) => {
+    GetFolderListing(directory, (err, listing) => {
+
+        //we want to feature the images and videos from this folder first, so check its contents before heading into its child folders
+
+        //randomize each, yes even folders which we'll search for more previews
+        var imageKeys = shuffle(Object.keys(listing.images));
+        var videoKeys = shuffle(Object.keys(listing.videos));
+        var folderKeys = shuffle(Object.keys(listing.folders));
 
         //image previews
-        var imageKeys = Object.keys(listing.images);
-        for (var i = 0, len = shuffled.length; i < len; ++i) {
-            previews.push(listing.images[shuffled[i]]);
+        for (var i = 0, len = imageKeys.length; i < len && i < numberOfImagePreviewsForFolder; ++i) {
+            previews.push(listing.images[imageKeys[i]]);
         }
 
         //video previews?
 
-        //folder
-        var folderKeys = Object.keys(listing.folders);
-        if (folderKeys.length > 0) {
+        //child folders: so we only want to start looking in child folders if we dont have enough previews.
+        if (folderKeys.length > 0 && previews.length < numberOfImagePreviewsForFolder) {
+
+            //we'll combine all child results and return them
+            var childPreviews = [];
 
             async.eachSeries(folderKeys, (folderKey, nextitem) => {
+
+                var childFolder = path.join(directory, folderKey);
+                console.log('stepping into child: ' + childFolder);
                 
-                FindPreviewImages(directory + '/' + folderKey, function(err, folderpreviews) {
+                FindPreviewImages(childFolder, function(err, folderpreviews) {
 
-                    previews = previews.concat(folderpreviews);
-
+                    childPreviews = childPreviews.concat(folderpreviews);
                     return nextitem();
-
-                }, previews);
+                });
 
             }, err => {
                 if (err) {
                     return callback(err);
                 }
+                //merge local and child previews
+                previews = previews.concat(childPreviews);
+                previews = previews.slice(0, numberOfImagePreviewsForFolder);
+
                 return callback(null, previews);
             });
         }
         else {
             return callback(null, previews);
         }
-    });
+    }, true); //true says we only want the folders listing, no functionality
 };
 
 var autoCapture = function(sourcePath) {

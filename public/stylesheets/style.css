@@ -119,7 +119,9 @@ div.scrubber div.marker {
 /* imageviewer gallery */
 #image-gallery {
       width: 100%;
-      position: relative;
+      position: absolute;
+	  top: 0px;
+	  left: 0px;
       height: 100%;
       background: #000;
 	  display: none;

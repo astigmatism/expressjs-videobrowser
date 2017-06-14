@@ -5,12 +5,11 @@ var Application = (function() {
 		var $gridwrapper = $('.grid-wrapper');
 		var $title = $('.title');
 		var $back = $('.back');
-		var $gallery = $('#image-gallery');
-		var $galleryclose = $('#image-gallery .iv-close');
+
+		var Gallery = new vbGallery($('#image-gallery'), $gridwrapper);
 
 		var tiles = clientdata.tiles;
 		var iteration = 0;
-		var galleryImages = [];
 
 		//main grid
 		var $grid = $('#grid').packery({
@@ -26,11 +25,6 @@ var Application = (function() {
 		//back button
 		$back.on('click touch', function () {
 			window.history.back();
-		});
-
-		//gallery
-		$galleryclose.on('click touch', function () {
-			RevealGallery($gallery, $gridwrapper, galleryImages, false);
 		});
 
 		//folders
@@ -84,6 +78,7 @@ var Application = (function() {
 		}
 
 		//images
+		var galleryImages = [];
 		for (file in clientdata.images) {
 
 			(function(file, clientdata, iteration) {
@@ -106,7 +101,7 @@ var Application = (function() {
 				var galleryIndex = galleryImages.length; //the current length is the index of this image
 
 				$clickOverlay.click(function(event) {
-					RevealGallery($gallery, $gridwrapper, galleryImages, true, galleryIndex, false);
+					Gallery.Show(galleryImages, galleryIndex, false);
 				});
 
 				$grid.append($gi).packery('appended', $gi);
@@ -334,25 +329,6 @@ var Application = (function() {
 		});
 	});
 
-	var RevealGallery = function($gallery, $gridwrapper, galleryImages, showGallery, startAt, enableSlideShow) {
-		
-		if (showGallery)
-		{
-			//set height dynamically, needs an actual value not %
-			$gallery.height($(window).height());
-
-			$gallery.show();
-			$gridwrapper.hide();
-
-			Gallery(galleryImages, startAt, enableSlideShow);
-		}
-		else {
-			$gridwrapper.show();
-			$gallery.hide();
-			$(window).off('keydown');
-		}
-	};
-
 	var applyBackgroundPosition = function(element, result) {
 
 		element.css('background-position', result.x + 'px ' + result.y + 'px');
@@ -383,83 +359,7 @@ var Application = (function() {
 
 	var Gallery = function(images, startAt, slideshowEnabled) {
 		
-		var curImageIdx = startAt;
-		var total = images.length;
-		var wrapper = $('#image-gallery');
-		var curSpan = wrapper.find('.current');
-		var viewer = ImageViewer(wrapper.find('.image-container'));
-		var slideshowtimer = null;
-	
-		//display total count
-		wrapper.find('.total').html(total);
-	
-		function showImage(){
-			var imgObj = images[curImageIdx - 1];
-			viewer.load(imgObj.small, imgObj.big);
-			curSpan.html(curImageIdx);
-		}
-
-		var next = function() {
-			curImageIdx++;
-			if(curImageIdx > total) curImageIdx = 1;
-			showImage();
-		};
-
-		var prev = function() {
-			curImageIdx--;
-			if(curImageIdx < 1) curImageIdx = total;
-			showImage();
-		};
-	
-		wrapper.find('.next').click(function(){
-			next();
-		});
-	
-		wrapper.find('.prev').click(function(){
-			prev();
-		});
-
-		wrapper.find('.slideshowlabel').click(function() {
-			slideshow();
-		});
-
-		var slideshow = function() {
-			if (slideshowtimer) {
-				clearInterval(slideshowtimer);
-				slideshowtimer = null;
-				wrapper.find('.slideshowlabel').text('Start');
-			}
-			else {
-				slideshowtimer = setInterval(function() {
-					next();
-				}, 2000);
-				wrapper.find('.slideshowlabel').text('Stop');
-			}
-		};
-
-		//keypress events
-		$(window).keydown(function(event) {
-			event.preventDefault();
-			
-			switch(event.which) {
-				case 37:
-					prev();
-					break;
-				case 39:
-					next();
-					break;
-				case 32:
-					slideshow();
-					break;
-			}
-		});
-
-		//initially show image
-		showImage();
-
-		if (slideshowEnabled) {
-			slideshow();
-		}
+		
 	}
 
 })();
