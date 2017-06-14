@@ -154,7 +154,7 @@ var FindPreviewImages = function(directory, callback) {
         for (var i = 0, len = imageKeys.length; i < len && i < numberOfImagePreviewsForFolder; ++i) {
             previews.push(listing.images[imageKeys[i]]);
         }
-        
+
         //video previews?
 
         //child folders: so we only want to start looking in child folders if we dont have enough previews.
@@ -169,18 +169,25 @@ var FindPreviewImages = function(directory, callback) {
                 
                 FindPreviewImages(childFolder, (err, folderpreviews) => {
 
-                    childPreviews = childPreviews.concat(folderpreviews);
-                    return nextitem();
+                    for (var i = 0, len = folderpreviews.length; i < len && previews.length < numberOfImagePreviewsForFolder; ++i) {
+                        previews.push(folderpreviews[i]);
+                    }
+
+                    //if full, leave
+                    if (previews.length > numberOfImagePreviewsForFolder) {
+                        return callback(null, previews);
+                    }
+                    //otherwise keep building in sibling folders
+                    else {
+                        return nextitem();
+                    }
                 });
 
             }, err => {
                 if (err) {
                     return callback(err);
                 }
-                //merge local and child previews
-                previews = previews.concat(shuffle(childPreviews));
-                previews = previews.slice(0, numberOfImagePreviewsForFolder);
-
+                //previews = previews.slice(0, numberOfImagePreviewsForFolder);
                 return callback(null, previews);
             });
         }
