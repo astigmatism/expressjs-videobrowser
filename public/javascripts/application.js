@@ -8,7 +8,6 @@ var Application = (function() {
 
 		var Gallery = new vbGallery($('#image-gallery'), $gridwrapper);
 
-		var tiles = clientdata.tiles;
 		var iteration = 0;
 
 		//main grid
@@ -109,7 +108,102 @@ var Application = (function() {
 			})(file, clientdata, iteration++);
 		};
 
-		//videos
+		//videos (old)
+		// for (file in clientdata.videosOLD) {
+
+		// 	(function(file, clientdata, iteration) {
+
+		// 		var data = clientdata.videos[file];
+		// 		var $gi = $('<div class="grid-item video" />');
+
+		// 		var caption = $('<div class="caption">' + file + '</div>');
+		// 		//$gi.append(caption);
+		// 		var videowrapper = $('<div class="videowrapper" />');
+		// 		$gi.append(videowrapper);
+
+		// 		var video = $('<video />', {
+		// 		    id: 'video',
+		// 		    src: data.thumb,
+		// 		    type: 'video/mp4',
+		// 		    controls: false,
+		// 		    autoplay: false,
+		// 		    preload: true
+		// 		});
+		// 		videowrapper.append(video);
+
+		// 		var scrubber = $('<div class="scrubber scrubberActive" />');
+		// 		videowrapper.append(scrubber);
+		// 		var marker = $('<div class="marker" />');
+				
+		// 		scrubber.append(marker);
+
+		// 		video.on('loadedmetadata', function() {
+		// 			this.currentTime = getRandomInt(1, this.duration);
+		// 		});
+
+		// 		video.on('timeupdate', function() {
+		// 			var perc = this.currentTime / this.duration;
+		// 			marker.css('left',  (video.width() * perc) + 'px');
+		// 		});
+
+		// 		var clickOverlay = $('<div class="click-overlay" />');
+		// 		videowrapper.append(clickOverlay);
+
+		// 		clickOverlay.click(function(event) {
+						
+		// 			var offset = $(this).offset();
+		// 			var percentageOfWidth = Math.round(((event.pageX - offset.left) / $gi.width()) * 100);
+
+		// 			if (percentageOfWidth < 25) {
+
+		// 				//back 5 seconds
+		// 				video[0].currentTime = (video[0].currentTime - 5) > 0 ? video[0].currentTime - 5 : video[0].currentTime;
+		// 				video[0].play();
+		// 				video.prop('muted', true);
+		// 			}
+		// 			else if (percentageOfWidth > 75) {	
+					
+		// 				//back 5 seconds
+		// 				video[0].currentTime = (video[0].currentTime + 5) < video[0].duration ? video[0].currentTime + 5 : video[0].currentTime;
+		// 				video[0].play();
+		// 				video.prop('muted', true);
+		// 			}
+		// 			else {
+		// 				if (video[0].paused) {
+		// 					window.open(data.media);
+		// 				} else {
+		// 					scrubber.click();
+		// 				}
+		// 			}
+		// 		});
+
+		// 		// scrubber.mousemove(function(event) {
+
+		// 		// 	if (video[0].paused) {
+
+		// 		// 		var offset = $(this).offset();
+		// 		// 		var percentageOfWidth = Math.round(((event.pageX - offset.left) / $(this).width()) * 100);
+						
+		// 		// 		video[0].currentTime = (percentageOfWidth * .01) * video[0].duration;
+		// 		// 	}
+		// 		// });
+
+		// 		// scrubber.click(function(event) {
+		// 		// 	if (video[0].paused) {
+		// 		// 		video[0].play();
+		// 		// 		video.prop('muted', true);
+		// 		// 	}
+		// 		// 	else {
+		// 		// 		video[0].pause();
+		// 		// 	}
+		// 		// });
+
+		// 		$grid.append($gi).packery('appended', $gi);
+
+		// 	})(file, clientdata, iteration++);
+		// };
+
+		//files
 		for (file in clientdata.videos) {
 
 			(function(file, clientdata, iteration) {
@@ -117,207 +211,68 @@ var Application = (function() {
 				var data = clientdata.videos[file];
 				var $gi = $('<div class="grid-item video" />');
 
-				var caption = $('<div class="caption">' + file + '</div>');
-				//$gi.append(caption);
-				var videowrapper = $('<div class="videowrapper" />');
-				$gi.append(videowrapper);
-
-				var video = $('<video />', {
-				    id: 'video',
-				    src: data.thumb,
-				    type: 'video/mp4',
-				    controls: false,
-				    autoplay: false,
-				    preload: true
-				});
-				videowrapper.append(video);
-
-				var scrubber = $('<div class="scrubber scrubberActive" />');
-				videowrapper.append(scrubber);
-				var marker = $('<div class="marker" />');
-				
-				scrubber.append(marker);
-
-				video.on('loadedmetadata', function() {
-					this.currentTime = getRandomInt(1, this.duration);
-				});
-
-				video.on('timeupdate', function() {
-					var perc = this.currentTime / this.duration;
-					marker.css('left',  (video.width() * perc) + 'px');
-				});
-
-				var clickOverlay = $('<div class="click-overlay" />');
-				videowrapper.append(clickOverlay);
-
-				clickOverlay.click(function(event) {
-						
-					var offset = $(this).offset();
-					var percentageOfWidth = Math.round(((event.pageX - offset.left) / $gi.width()) * 100);
-
-					if (percentageOfWidth < 25) {
-
-						//back 5 seconds
-						video[0].currentTime = (video[0].currentTime - 5) > 0 ? video[0].currentTime - 5 : video[0].currentTime;
-						video[0].play();
-						video.prop('muted', true);
-					}
-					else if (percentageOfWidth > 75) {	
-					
-						//back 5 seconds
-						video[0].currentTime = (video[0].currentTime + 5) < video[0].duration ? video[0].currentTime + 5 : video[0].currentTime;
-						video[0].play();
-						video.prop('muted', true);
-					}
-					else {
-						if (video[0].paused) {
-							window.open(data.media);
-						} else {
-							scrubber.click();
-						}
-					}
-				});
-
-				scrubber.mousemove(function(event) {
-
-					if (video[0].paused) {
-
-						var offset = $(this).offset();
-						var percentageOfWidth = Math.round(((event.pageX - offset.left) / $(this).width()) * 100);
-						
-						video[0].currentTime = (percentageOfWidth * .01) * video[0].duration;
-					}
-				});
-
-				scrubber.click(function(event) {
-					if (video[0].paused) {
-						video[0].play();
-						video.prop('muted', true);
-					}
-					else {
-						video[0].pause();
-					}
-				});
-
 				$grid.append($gi).packery('appended', $gi);
 
-			})(file, clientdata, iteration++);
-		};
-
-		//files
-		for (file in clientdata.files) {
-
-			(function(file, clientdata, iteration) {
-
-				var data = clientdata.files[file];
-				var li = $('<li class="file"></li>');
-				$('#listing').append(li);
-
-				var preview = $('<div class="preview" />');
-				li.append(preview);
-				var clickOverlay = $('<div class="click-overlay" />');
-				li.append(clickOverlay);
-				var scrubber = $('<div class="scrubber" />');
-				li.append(scrubber);
-				var framecounter = $('<div class="frame-counter" />');
-				scrubber.append(framecounter);
-				var caption = $('<div class="caption">' + data.filename + '</div>');
-				li.append(caption);
+				var $framecounter = $('<div class="frame-counter" />');
+				$gi.append($framecounter);
+				var $preview = $('<div class="preview" />');
+				$gi.append($preview);
+				var $clickOverlay = $('<div class="click-overlay" />');
+				$gi.append($clickOverlay);
+				var $caption = $('<div class="caption">' + data.filename + '</div>');
+				$gi.append($caption);
+				
 				
 
-				var image = $('<img />').attr('src', '/thumbs' + clientdata.location + '/' + file);
+				var $image = $('<img />').attr('src', data.thumb);
 
-				$(image).on('load', function() {
+				$image.on('load', function() {
 					
 					var height = this.height;
 					var width = this.width;
-					var maxFrame = (tiles.x * tiles.y) - 1;
-					var currentFrame = getRandomInt(0, maxFrame);
+					var maxFrame = (clientdata.framesPerAxis * clientdata.framesPerAxis) - 1;
+					var currentFrame = 1; //getRandomInt(0, maxFrame);
 					var paused = false;
 					var currentPrecentagePosition = 50;
 
-					width = (preview.width() / clientdata.thumbSize.width) * width;
-					height = (preview.height() / clientdata.thumbSize.height) * height;
-
-					var aspectRatio =  height / width;
-					var cssheight = preview.width() * aspectRatio;
+					//frame size
+					var framewidth = width / clientdata.framesPerAxis;
+					var frameheight = height / clientdata.framesPerAxis;
 
 					var setBackgroundPosition = function(delta) {
+						
 						currentFrame = currentFrame + delta;
 						currentFrame = currentFrame > maxFrame ? 0 : currentFrame;
 						currentFrame = currentFrame < 0 ? maxFrame : currentFrame;
-						backgroundPosition = getBackgoundPosition(currentFrame, width, height);
-						applyBackgroundPosition(preview, backgroundPosition);
-						framecounter.text(Math.round((currentFrame / maxFrame) * 100) + '%');
+
+						backgroundPosition = getBackgoundPosition(currentFrame, width, height, clientdata.framesPerAxis);
+						$preview.css('background-position', backgroundPosition.x + 'px ' + backgroundPosition.y + 'px');
+						$framecounter.text(Math.round((currentFrame / maxFrame) * 100) + '%');
 					};
 
-					preview.css('height', cssheight + 'px');
-					preview.css('background-image', 'url("/thumbs' + clientdata.location + '/' + file + '")');
-					preview.css('background-size', width + 'px ' + height + 'px');
+					$preview.css('height', frameheight + 'px');
+					$preview.css('width', framewidth + 'px');
+					$caption.css('width', framewidth + 'px');
+					$preview.css('background-image', 'url("' + data.thumb + '")');
+					$preview.css('background-size', width + 'px ' + height + 'px');
 
 					setBackgroundPosition(0);
-					
 
-					// setTimeout(function() {
-					// 	setInterval(function() {
-							
-					// 		if (!paused) {
-					// 			setBackgroundPosition(1);
-					// 		}
-					// 	}, 3000);
-					// }, iteration * 100);
-
-					var scrollInterval;
-
-					clickOverlay.mouseleave(function(event) {
-						paused = false;
-						//clearInterval(scrollInterval);
-					});
-
-					clickOverlay.click(function(event) {
+					$clickOverlay.click(function(event) {
 						
 						var offset = $(this).offset();
-						var percentageOfWidth = Math.round(((event.pageX - offset.left) / preview.width()) * 100);
-
-						if (scrollInterval) {
-							clearInterval(scrollInterval);
-							scrollInterval = null;
-							return;
-						}
+						var percentageOfWidth = Math.round(((event.pageX - offset.left) / framewidth) * 100);
 
 						if (percentageOfWidth < 25) {
-							scrollInterval = setInterval(function() {
-								setBackgroundPosition(-1);
-							}, clientdata.scrollSpeed);
+							setBackgroundPosition(-1);
 						}
 						else if (percentageOfWidth > 75) {
-							scrollInterval = setInterval(function() {
-								setBackgroundPosition(1);
-							}, clientdata.scrollSpeed);
+							setBackgroundPosition(1);
 						}
 						else {
-							window.location = '/thumbs' + clientdata.location + '/' + file;
+							window.location = data.media;
 						}
 					});
-
-					// preview.mousemove(function(event) {
-
-					// 	var offset = $(this).offset();
-					// 	var percentageOfWidth = Math.round(((event.pageX - offset.left) / 320) * 100);
-
-					// 	if (percentageOfWidth > currentPrecentagePosition) {
-					// 		currentFrame = (currentFrame + 1) % 100;
-					// 	}
-					// 	else if (percentageOfWidth < currentPrecentagePosition) {
-					// 		currentFrame = (currentFrame + 1) % 100;
-					// 	} else {
-					// 		return; //same value, no changes
-					// 	}
-					// 	backgroundPosition = getBackgoundPosition(currentFrame, width, height);
-					// 	applyBackgroundPosition(preview, backgroundPosition);
-					// 	framecounter.text(currentFrame);
-					// 	currentPrecentagePosition = percentageOfWidth;
-					// });
 				});
 
 			})(file, clientdata, iteration++);	
@@ -331,20 +286,20 @@ var Application = (function() {
 
 	var applyBackgroundPosition = function(element, result) {
 
-		element.css('background-position', result.x + 'px ' + result.y + 'px');
+		
 		// element.animate({
 		// 	'background-position-x': result.x,
 		// 	'background-position-y': result.y
 		// });
 	};
 
-	var getBackgoundPosition = function(frameNumber, width, height) {
+	var getBackgoundPosition = function(frameNumber, width, height, framesPerAxis) {
 
-		var column = frameNumber % tiles.x;
-		var row = Math.floor(frameNumber / tiles.y);
+		var column = frameNumber % framesPerAxis;
+		var row = Math.floor(frameNumber / framesPerAxis);
 
-		var xPos = (column * (width / tiles.x)) * -1;
-		var yPos = (row * (height / tiles.y)) * -1;
+		var xPos = (column * (width / framesPerAxis)) * -1;
+		var yPos = (row * (height / framesPerAxis)) * -1;
 
 		return {
 			x: xPos,

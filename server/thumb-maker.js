@@ -7,6 +7,7 @@ const gm = require('gm');
 
 //private
 var thumbFolder = config.get('thumbRoot');
+var numberofFramesPerAxis = parseInt(config.get('numberofFramesPerAxis'), 10); //grid will be this value * 2
 
 //public
 exports = module.exports = {
@@ -61,15 +62,11 @@ exports = module.exports = {
                                 return;
                             }
 
-                            //if a file, attempt a conversion, first detect which type
-                            
-                            var isImage = new RegExp(config.get('patterns.image'), 'i').test(item);
-                            var isVideo = new RegExp(config.get('patterns.video'), 'i').test(item);
-                            var isAvoid = new RegExp(config.get('patterns.avoid'), 'i').test(item);
-                            
                             var sourceFile = path.join(sourceFolder, item);
-                            var destinationFileName = path.basename(item) + (isImage ? '.' + config.get('images.ext') : (isVideo ? '.' + config.get('videos.ext') : ''));
-                            var destinationFile = path.join(destinationPath, destinationFileName);
+
+                            var fileDetails = exports.ConvertSourceFileNameToThumbFileName(item);
+                            
+                            var destinationFile = path.join(destinationPath, fileDetails.thumb);
 
                             //if destination file exists, do we need to override it?
                             handleDestination(destinationFile, override, (err, perform) => {
@@ -79,22 +76,46 @@ exports = module.exports = {
 
                                 if (perform) {
 
-                                    console.log('------------------------------ ' + (isImage ? 'image' : (isVideo ? 'video' : '')) + ' ------------------------------');
+                                    console.log('------------------------------ ' + fileDetails.type + ' ------------------------------');
                                     console.log('Source: ' + sourceFile);
                                     console.log('Destination: ' + destinationFile);
 
                                     //ok, what type of conversion is this?
 
-                                    if (isVideo) {
+                                    if (fileDetails.type == 'video') {
 
-                                        convertVideo(sourceFile, destinationFile, err => {
+                                        //handbrake
+                                        // convertVideo(sourceFile, destinationFile, err => {
+                                        //     if (err) {
+                                        //         console.log(err);
+                                        //     }
+                                        //     return nextitem();
+                                        // });
+
+                                        //ffmpeg
+                                        GetAspectRatio(sourceFile, (err, width, height) => {
                                             if (err) {
-                                                console.log(err);
+                                                return callback(err);
                                             }
-                                            return nextitem();
+
+                                            var aspectRatio = height / width;
+
+                                            GetFrameCount(sourceFile, (err, frameCount) => {
+
+                                                //with frame count known, we can extract exactly the number of frames to fit our grid
+                                                var captureEvery = Math.round(frameCount / (numberofFramesPerAxis * numberofFramesPerAxis));
+
+                                                CaptureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
+                                                    if (err) {
+                                                        return callback(err);
+                                                    }
+                                                    nextitem();
+                                                });
+
+                                            });
                                         });
                                     }
-                                    else if (isImage) {
+                                    else if (fileDetails.type == 'image') {
 
                                         gm(sourceFile).resize(320).setFormat(config.get('images.ext')).quality(100).write(destinationFile, err => {
                                             if (err) {
@@ -125,6 +146,50 @@ exports = module.exports = {
                 });
             });
         });
+    },
+
+    ConvertThumbFileNameToSourceFileName: function(filename) {
+
+        var result = path.basename(filename, path.extname(filename)); //remove extra image extension from thumb
+
+        var imageRegex = new RegExp('^(' + config.get('images.prefix') + ').*$');
+        var videoRegex = new RegExp('^(' + config.get('videos.prefix') + ').*$');
+
+        //is an image
+        if (imageRegex.test(result)) {
+            result = result.replace(config.get('images.prefix'), '');
+        }
+
+        //is a video
+        else if (videoRegex.test(result)) {
+            result = result.replace(config.get('videos.prefix'), '');
+        }
+
+        return result;
+    },
+
+    ConvertSourceFileNameToThumbFileName: function(filename) {
+
+        var isImage = new RegExp(config.get('patterns.image'), 'i').test(filename);
+        var isVideo = new RegExp(config.get('patterns.video'), 'i').test(filename);
+        var isAvoid = new RegExp(config.get('patterns.avoid'), 'i').test(filename);
+        
+        var result = {
+            thumb: '',
+            type: ''
+        };
+
+        //destination thumb name can differ depending on how we might detect it browsing
+        
+        if (isImage) {
+            result.type = 'image';
+            result.thumb = config.get('images.prefix') + path.basename(filename) + '.' + config.get('images.ext');
+        } else if (isVideo) {
+            result.type = 'video';
+            result.thumb = config.get('videos.prefix') + path.basename(filename) + '.' + config.get('videos.ext');
+        }
+
+        return result;
     }
 };
 
@@ -148,7 +213,7 @@ var convertVideo = function(sourceFile, destinationFile, callback) {
     });
 };
 
-var getAspectRatio = function(sourceFile, callback) {
+var GetAspectRatio = function(sourceFile, callback) {
 
     var commandWidth = 'ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=width "' + sourceFile + '"';
     var commandHeight = 'ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height "' + sourceFile + '"';
@@ -186,7 +251,7 @@ var getAspectRatio = function(sourceFile, callback) {
     });
 };
 
-var getFrameCount = function(sourceFile, callback) {
+var GetFrameCount = function(sourceFile, callback) {
 
     var command = 'ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 "' + sourceFile + '"';
     var frameCount = 0;
@@ -208,12 +273,12 @@ var getFrameCount = function(sourceFile, callback) {
     });
 }
 
-var captureFrames = function(sourceFile, destinationFile, captureEvery, aspectRatio, callback) {
+var CaptureFrames = function(sourceFile, destinationFile, captureEvery, aspectRatio, callback) {
 
-    var thumbWidth = config.get('thumbSize.width');
+    var thumbWidth = config.get('videoThumbSize.width');
     var thumbHeight = thumbWidth * aspectRatio;
 
-    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=' + config.get('tiles.x') + 'x' + config.get('tiles.y') + '" "' + path.join(destinationFile) + '"';
+    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=' + numberofFramesPerAxis + 'x' + numberofFramesPerAxis + '" "' + path.join(destinationFile) + '"';
     
     //console.log('Capture command: ' + command);
     console.log('Capturing every ' + captureEvery + ' frames...');
@@ -283,13 +348,14 @@ var cleanUp = function(sourceFolder, destinationPath, callback) {
                     return nextitem(err);
                 }
 
-                //if a file
-                var sourceItem = path.join(sourceFolder, path.basename(item, path.extname(item))); //remove's the .png to reveal the source file name
+                var sourceItem = path.join(sourceFolder, item); //start by taking the name without modification
 
-                //if a folder
-                if (stats.isDirectory()) {
+                //if a file, need to change filename to match source (folder names are the same in both)
+                if (!stats.isDirectory()) {
 
-                    sourceItem = path.join(sourceFolder, item);
+                    //sanitize the thumb name to match the source name
+                    var sourceFileName = exports.ConvertThumbFileNameToSourceFileName(item);
+                    sourceItem = path.join(sourceFolder, sourceFileName);
                 }
 
                 fs.exists(sourceItem, exists => {

@@ -4,14 +4,20 @@
 	"webThumbRoot": "/thumbs",
 	"webMediaRoot": "/media",
 	"images": {
+		"prefix": "{{i}}",
 		"ext": "png"
 	},
 	"videos": {
-		"ext": "mp4"
+		"prefix": "{{v}}",
+		"ext": "png"
 	},
 	"patterns": {
 		"image": "\\.(jpe?g|png|gif|bmp)$",
 		"video": "\\.(avi|wmv|mp4|m4v|mpg|mkv|mov|flv)$",
 		"avoid": "\\.(db|zip|txt|url)$"
-	}
+	},
+	"videoThumbSize": {
+		"width": 300
+	},
+	"numberofFramesPerAxis": 8
 }

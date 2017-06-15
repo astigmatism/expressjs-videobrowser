@@ -70,6 +70,7 @@ var GetFolderListing = function(folder, callback) {
 
     var listing = {
         location: folder,
+        framesPerAxis: parseInt(config.get('numberofFramesPerAxis'), 10),
         videos: {},
         images: {},
         folders: {}
@@ -96,9 +97,8 @@ var GetFolderListing = function(folder, callback) {
             //default set of data to include
             var details = {
                 thumb: path.join(webThumbFolder, item),
-                filename: thumbDetails.name,
-                ext: thumbDetails.ext,
-                media: path.join(webMediaFolder, thumbDetails.name)
+                thumbFileName: thumbDetails.name,
+                ext: thumbDetails.ext
             };
 
             //get stats for the source item (file or folder)
@@ -115,13 +115,19 @@ var GetFolderListing = function(folder, callback) {
                 //is a file
                 else {
 
+                    var imageRegex = new RegExp('^(' + config.get('images.prefix') + ').*$');
+                    var videoRegex = new RegExp('^(' + config.get('videos.prefix') + ').*$');
+
+                    details.filename = thumbmaker.ConvertThumbFileNameToSourceFileName(item);
+                    details.media = path.join(webMediaFolder, details.filename);
+
                     //is an image
-                    if (details.ext === '.' + config.get('images.ext')) {
+                    if (imageRegex.test(details.thumbFileName)) {
                         listing.images[item] = details;
                     }
 
                     //is a video
-                    else if (details.ext === '.' + config.get('videos.ext')) {
+                    else if (videoRegex.test(details.thumbFileName)) {
                         listing.videos[item] = details;
                     }
                 }

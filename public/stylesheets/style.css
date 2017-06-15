@@ -60,6 +60,22 @@ a {
 }
 
 .video {
+	cursor: pointer;
+	font-size: 12px;
+}
+
+.video .frame-counter {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+.video .caption {
+	overflow: hidden;
+}
+
+/*
+.video {
 	background-color: #eee;
 }
 
@@ -70,6 +86,7 @@ a {
 .video video {
 	width: 100%;
 }
+*/
 
 .image {
 	cursor: pointer;
