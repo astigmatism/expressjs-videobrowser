@@ -108,102 +108,7 @@ var Application = (function() {
 			})(file, clientdata, iteration++);
 		};
 
-		//videos (old)
-		// for (file in clientdata.videosOLD) {
-
-		// 	(function(file, clientdata, iteration) {
-
-		// 		var data = clientdata.videos[file];
-		// 		var $gi = $('<div class="grid-item video" />');
-
-		// 		var caption = $('<div class="caption">' + file + '</div>');
-		// 		//$gi.append(caption);
-		// 		var videowrapper = $('<div class="videowrapper" />');
-		// 		$gi.append(videowrapper);
-
-		// 		var video = $('<video />', {
-		// 		    id: 'video',
-		// 		    src: data.thumb,
-		// 		    type: 'video/mp4',
-		// 		    controls: false,
-		// 		    autoplay: false,
-		// 		    preload: true
-		// 		});
-		// 		videowrapper.append(video);
-
-		// 		var scrubber = $('<div class="scrubber scrubberActive" />');
-		// 		videowrapper.append(scrubber);
-		// 		var marker = $('<div class="marker" />');
-				
-		// 		scrubber.append(marker);
-
-		// 		video.on('loadedmetadata', function() {
-		// 			this.currentTime = getRandomInt(1, this.duration);
-		// 		});
-
-		// 		video.on('timeupdate', function() {
-		// 			var perc = this.currentTime / this.duration;
-		// 			marker.css('left',  (video.width() * perc) + 'px');
-		// 		});
-
-		// 		var clickOverlay = $('<div class="click-overlay" />');
-		// 		videowrapper.append(clickOverlay);
-
-		// 		clickOverlay.click(function(event) {
-						
-		// 			var offset = $(this).offset();
-		// 			var percentageOfWidth = Math.round(((event.pageX - offset.left) / $gi.width()) * 100);
-
-		// 			if (percentageOfWidth < 25) {
-
-		// 				//back 5 seconds
-		// 				video[0].currentTime = (video[0].currentTime - 5) > 0 ? video[0].currentTime - 5 : video[0].currentTime;
-		// 				video[0].play();
-		// 				video.prop('muted', true);
-		// 			}
-		// 			else if (percentageOfWidth > 75) {	
-					
-		// 				//back 5 seconds
-		// 				video[0].currentTime = (video[0].currentTime + 5) < video[0].duration ? video[0].currentTime + 5 : video[0].currentTime;
-		// 				video[0].play();
-		// 				video.prop('muted', true);
-		// 			}
-		// 			else {
-		// 				if (video[0].paused) {
-		// 					window.open(data.media);
-		// 				} else {
-		// 					scrubber.click();
-		// 				}
-		// 			}
-		// 		});
-
-		// 		// scrubber.mousemove(function(event) {
-
-		// 		// 	if (video[0].paused) {
-
-		// 		// 		var offset = $(this).offset();
-		// 		// 		var percentageOfWidth = Math.round(((event.pageX - offset.left) / $(this).width()) * 100);
-						
-		// 		// 		video[0].currentTime = (percentageOfWidth * .01) * video[0].duration;
-		// 		// 	}
-		// 		// });
-
-		// 		// scrubber.click(function(event) {
-		// 		// 	if (video[0].paused) {
-		// 		// 		video[0].play();
-		// 		// 		video.prop('muted', true);
-		// 		// 	}
-		// 		// 	else {
-		// 		// 		video[0].pause();
-		// 		// 	}
-		// 		// });
-
-		// 		$grid.append($gi).packery('appended', $gi);
-
-		// 	})(file, clientdata, iteration++);
-		// };
-
-		//files
+		//videos
 		for (file in clientdata.videos) {
 
 			(function(file, clientdata, iteration) {
@@ -231,7 +136,7 @@ var Application = (function() {
 					var height = this.height;
 					var width = this.width;
 					var maxFrame = (clientdata.framesPerAxis * clientdata.framesPerAxis) - 1;
-					var currentFrame = 1; //getRandomInt(0, maxFrame);
+					var currentFrame = getRandomInt(0, maxFrame);
 					var paused = false;
 					var currentPrecentagePosition = 50;
 
@@ -283,15 +188,6 @@ var Application = (function() {
 			$('.grid-item').removeClass('invisible');
 		});
 	});
-
-	var applyBackgroundPosition = function(element, result) {
-
-		
-		// element.animate({
-		// 	'background-position-x': result.x,
-		// 	'background-position-y': result.y
-		// });
-	};
 
 	var getBackgoundPosition = function(frameNumber, width, height, framesPerAxis) {
 

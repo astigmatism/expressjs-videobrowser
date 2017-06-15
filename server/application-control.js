@@ -162,6 +162,9 @@ var FindPreviewImages = function(directory, callback) {
         }
 
         //video previews?
+        for (var i = 0, len = videoKeys.length; i < len && i < numberOfImagePreviewsForFolder; ++i) {
+            previews.push(listing.videos[videoKeys[i]]);
+        }
 
         //child folders: so we only want to start looking in child folders if we dont have enough previews.
         if (folderKeys.length > 0 && previews.length < numberOfImagePreviewsForFolder) {
