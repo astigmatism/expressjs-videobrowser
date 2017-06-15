@@ -158,12 +158,18 @@ var FindPreviewImages = function(directory, callback) {
 
         //image previews
         for (var i = 0, len = imageKeys.length; i < len && i < numberOfImagePreviewsForFolder; ++i) {
-            previews.push(listing.images[imageKeys[i]]);
+            previews.push({
+                type: 'image',
+                data: listing.images[imageKeys[i]]
+            })
         }
 
         //video previews?
         for (var i = 0, len = videoKeys.length; i < len && i < numberOfImagePreviewsForFolder; ++i) {
-            previews.push(listing.videos[videoKeys[i]]);
+            previews.push({
+                type: 'video',
+                data: listing.videos[videoKeys[i]]
+            });
         }
 
         //child folders: so we only want to start looking in child folders if we dont have enough previews.
@@ -194,6 +200,7 @@ var FindPreviewImages = function(directory, callback) {
             });
         }
         else {
+            previews = previews.slice(0, numberOfImagePreviewsForFolder); //it can go over when images and video exist without children
             return callback(null, previews);
         }
     });

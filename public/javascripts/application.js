@@ -5,6 +5,7 @@ var Application = (function() {
 		var $gridwrapper = $('.grid-wrapper');
 		var $title = $('.title');
 		var $back = $('.back');
+		var numberOfFramesPerAxis = 8; //please mater with server
 
 		var Gallery = new vbGallery($('#image-gallery'), $gridwrapper);
 
@@ -13,7 +14,8 @@ var Application = (function() {
 		//main grid
 		var $grid = $('#grid').packery({
   			itemSelector: '.grid-item',
-			transitionDuration: 0
+			transitionDuration: 0,
+			gutter: 10
 		});
 
 		//title
@@ -57,20 +59,46 @@ var Application = (function() {
 					});
 
 					for (var i = 0; i < data.preview.length; ++i) {
-						var $previewImageGridItem = $('<div class="preview-grid-item invisible"></div>');
-						var $previewImage = $('<img src="' + data.preview[i].thumb + '" />');
-						
-						$previewImageGridItem.append($previewImage);
-						$previewGrid.append($previewImageGridItem).packery('appended', $previewImageGridItem);
-					} 
 
-					$previewGrid.imagesLoaded().progress( function() {
-						$previewGrid.packery();
-						$('.preview-grid-item').imagefill({
-							runOnce: true
-						});
-						$('.preview-grid-item').removeClass('invisible');
-					});
+						(function(details) {
+
+							var $previewImageGridItem = $('<div class="preview-grid-item invisible"></div>');
+							var $previewImage = $('<img src="' + details.data.thumb + '" />');
+							
+							$previewImageGridItem.append($previewImage);
+
+							//append to dom here for image to load
+							$previewGrid.append($previewImageGridItem).packery('appended', $previewImageGridItem);
+
+							$previewImageGridItem.imagesLoaded().progress( function() {
+
+								if (details.type === 'video') {
+
+									//let's find a frame focal point to zoom on
+									var frameWidth = ($previewImage.width() / numberOfFramesPerAxis);
+									var frameHeight = ($previewImage.height() / numberOfFramesPerAxis);
+									var x = (frameWidth * getRandomInt(0, numberOfFramesPerAxis -1)) + (frameWidth / 4); //sum to center on frame
+									var y = (frameHeight * getRandomInt(0, numberOfFramesPerAxis -1)); // + (frameHeight / 4);
+
+									$previewImageGridItem.addClass('videopreview');
+
+									$previewImage.css('left', x * -1); //-1 to move image to left
+									$previewImage.css('top', y * -1);
+
+									$previewImageGridItem.removeClass('invisible');
+								}
+
+								else if (details.type === 'image') {
+
+									//scale image to fill container and remove hidden
+									$previewImage.imageScale();
+									$previewImageGridItem.removeClass('invisible');
+								}
+							});
+
+						})(data.preview[i]);
+					}
+					$previewGrid.packery();
 				}
 
 			})(folder, clientdata);
@@ -115,8 +143,6 @@ var Application = (function() {
 
 				var data = clientdata.videos[file];
 				var $gi = $('<div class="grid-item video" />');
-
-				$grid.append($gi).packery('appended', $gi);
 
 				var $framecounter = $('<div class="frame-counter" />');
 				$gi.append($framecounter);
@@ -178,6 +204,8 @@ var Application = (function() {
 							window.location = data.media;
 						}
 					});
+
+					$grid.append($gi).packery('appended', $gi);
 				});
 
 			})(file, clientdata, iteration++);	

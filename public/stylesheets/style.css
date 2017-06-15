@@ -42,7 +42,6 @@ a {
 }
 
 .grid-item {
-	margin: 2px;
 }
 
 .preview-grid-item {
@@ -62,6 +61,7 @@ a {
 .video {
 	cursor: pointer;
 	font-size: 12px;
+	background: linear-gradient(180deg, #555 0%, #666 51%, #555 75%);
 }
 
 .video .frame-counter {
@@ -181,3 +181,21 @@ div.scrubber div.marker {
 		margin-right: 10px;
 		cursor: pointer;
 	}
+
+/* !FOCUSED IMAGES */
+/*-----------------------------------------*/
+.videopreview {
+	position: relative; /*Any position but static should work*/
+	overflow: hidden;
+}
+.videopreview img {
+	position: absolute;
+	left: 0;
+	top: 0;
+	margin: 0;
+	display: block;
+	/* fill and maintain aspect ratio */
+	width: auto; height: auto;
+	min-width: 100%; min-height: 100%;
+	max-height: none; max-width: none;
+}
