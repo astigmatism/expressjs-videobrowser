@@ -167,8 +167,8 @@ var Application = (function() {
 					var currentPrecentagePosition = 50;
 
 					//frame size
-					var framewidth = width / clientdata.framesPerAxis;
-					var frameheight = height / clientdata.framesPerAxis;
+					var frameWidth = width / clientdata.framesPerAxis;
+					var frameHeight = height / clientdata.framesPerAxis;
 
 					var setBackgroundPosition = function(delta) {
 						
@@ -181,9 +181,9 @@ var Application = (function() {
 						$framecounter.text(Math.round((currentFrame / maxFrame) * 100) + '%');
 					};
 
-					$preview.css('height', frameheight + 'px');
-					$preview.css('width', framewidth + 'px');
-					$caption.css('width', framewidth + 'px');
+					$preview.css('height', frameHeight + 'px');
+					$preview.css('width', frameWidth + 'px');
+					$caption.css('width', frameWidth + 'px');
 					$preview.css('background-image', 'url("' + data.thumb + '")');
 					$preview.css('background-size', width + 'px ' + height + 'px');
 
@@ -192,7 +192,7 @@ var Application = (function() {
 					$clickOverlay.click(function(event) {
 						
 						var offset = $(this).offset();
-						var percentageOfWidth = Math.round(((event.pageX - offset.left) / framewidth) * 100);
+						var percentageOfWidth = Math.round(((event.pageX - offset.left) / frameWidth) * 100);
 
 						if (percentageOfWidth < 25) {
 							setBackgroundPosition(-1);
@@ -201,7 +201,31 @@ var Application = (function() {
 							setBackgroundPosition(1);
 						}
 						else {
-							window.location = data.media;
+							//window.location = data.media;
+							// $gridwrapper.hide();
+							// $vw = $('#videowrapper');
+							// $vw.height($(window).height());
+							// $vw.width($(window).width());
+
+							var $video = $('<video />', {								
+								src: data.media,
+								type: 'video/mp4',
+								autoplay: true,
+								preload: true,
+								width: frameWidth,
+								height: frameHeight
+							});
+
+							$clickOverlay.unbind('click touch');
+
+							//replace preview with video!
+							$clickOverlay.html($video);
+
+							$video.mediaelementplayer({
+								videoWidth: frameWidth,
+								videoHeight: frameHeight,
+								keyActions: []
+							});
 						}
 					});
 
