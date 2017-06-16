@@ -40,6 +40,9 @@ exports = module.exports = {
                 return callback(err);
             }
 
+            //add other details for the client here
+            listing.framesPerAxis = config.get('framesPerAxis');
+
             //find previews for folders
             var folderKeys = Object.keys(listing.folders);
             async.eachSeries(folderKeys, (folder, nextfolder) => {
@@ -70,7 +73,6 @@ var GetFolderListing = function(folder, callback) {
 
     var listing = {
         location: folder,
-        framesPerAxis: parseInt(config.get('numberofFramesPerAxis'), 10),
         videos: {},
         images: {},
         folders: {}

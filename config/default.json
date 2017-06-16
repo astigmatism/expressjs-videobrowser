@@ -19,5 +19,5 @@
 	"videoThumbSize": {
 		"width": 300
 	},
-	"numberofFramesPerAxis": 8
+	"framesPerAxis": 5
 }

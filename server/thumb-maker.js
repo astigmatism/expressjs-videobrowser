@@ -7,7 +7,7 @@ const gm = require('gm');
 
 //private
 var thumbFolder = config.get('thumbRoot');
-var numberofFramesPerAxis = parseInt(config.get('numberofFramesPerAxis'), 10); //grid will be this value * 2
+var framesPerAxis = parseInt(config.get('framesPerAxis'), 10); //grid will be this value * 2
 
 //public
 exports = module.exports = {
@@ -103,7 +103,7 @@ exports = module.exports = {
                                             GetFrameCount(sourceFile, (err, frameCount) => {
 
                                                 //with frame count known, we can extract exactly the number of frames to fit our grid
-                                                var captureEvery = Math.round(frameCount / (numberofFramesPerAxis * numberofFramesPerAxis));
+                                                var captureEvery = Math.round(frameCount / (framesPerAxis * framesPerAxis));
 
                                                 CaptureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
                                                     if (err) {
@@ -278,7 +278,7 @@ var CaptureFrames = function(sourceFile, destinationFile, captureEvery, aspectRa
     var thumbWidth = config.get('videoThumbSize.width');
     var thumbHeight = thumbWidth * aspectRatio;
 
-    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=' + numberofFramesPerAxis + 'x' + numberofFramesPerAxis + '" "' + path.join(destinationFile) + '"';
+    var command = 'ffmpeg -i "' + sourceFile + '" -frames 1 -vf "select=not(mod(n\\,' + captureEvery + ')),scale=' + thumbWidth + ':' + thumbHeight + ',tile=' + framesPerAxis + 'x' + framesPerAxis + '" "' + path.join(destinationFile) + '"';
     
     //console.log('Capture command: ' + command);
     console.log('Capturing every ' + captureEvery + ' frames...');

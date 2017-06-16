@@ -5,7 +5,7 @@ var Application = (function() {
 		var $gridwrapper = $('.grid-wrapper');
 		var $title = $('.title');
 		var $back = $('.back');
-		var numberOfFramesPerAxis = 8; //please mater with server
+		var framesPerAxis = clientdata.framesPerAxis; //please mater with server
 
 		var Gallery = new vbGallery($('#image-gallery'), $gridwrapper);
 
@@ -75,10 +75,10 @@ var Application = (function() {
 								if (details.type === 'video') {
 
 									//let's find a frame focal point to zoom on
-									var frameWidth = ($previewImage.width() / numberOfFramesPerAxis);
-									var frameHeight = ($previewImage.height() / numberOfFramesPerAxis);
-									var x = (frameWidth * getRandomInt(0, numberOfFramesPerAxis -1)) + (frameWidth / 4); //sum to center on frame
-									var y = (frameHeight * getRandomInt(0, numberOfFramesPerAxis -1)); // + (frameHeight / 4);
+									var frameWidth = ($previewImage.width() / framesPerAxis);
+									var frameHeight = ($previewImage.height() / framesPerAxis);
+									var x = (frameWidth * getRandomInt(0, framesPerAxis -1)) + (frameWidth / 4); //sum to center on frame
+									var y = (frameHeight * getRandomInt(0, framesPerAxis -1)); // + (frameHeight / 4);
 
 									$previewImageGridItem.addClass('videopreview');
 
@@ -201,17 +201,12 @@ var Application = (function() {
 							setBackgroundPosition(1);
 						}
 						else {
-							//window.location = data.media;
-							// $gridwrapper.hide();
-							// $vw = $('#videowrapper');
-							// $vw.height($(window).height());
-							// $vw.width($(window).width());
 
 							var $video = $('<video />', {								
 								src: data.media,
 								type: 'video/mp4',
-								autoplay: true,
 								preload: true,
+								autoplay: true,
 								width: frameWidth,
 								height: frameHeight
 							});
@@ -220,12 +215,40 @@ var Application = (function() {
 
 							//replace preview with video!
 							$clickOverlay.html($video);
-
+							
 							$video.mediaelementplayer({
 								videoWidth: frameWidth,
 								videoHeight: frameHeight,
-								keyActions: []
+								// keyActions: {
+								// 	keys: [38], // UP
+								// 	action: (player, media) => {
+
+								// 		// if (player.container.querySelector(`.${config.classPrefix}volume-button>button`).matches(':focus') ||
+								// 		// 	player.container.querySelector(`.${config.classPrefix}volume-slider`).matches(':focus')) {
+								// 		// 	player.container.querySelector(`.${config.classPrefix}volume-slider`).style.display = '';
+								// 		// }
+								// 		if (player.isVideo) {
+								// 			player.showControls();
+								// 			player.startControlsTimer();
+								// 		}
+
+								// 		media.playbackRate += 0.1;
+
+								// 		// const newVolume = Math.min(media.volume + 0.1, 1);
+								// 		// media.setVolume(newVolume);
+								// 		// if (newVolume > 0) {
+								// 		// 	media.setMuted(false);
+								// 		// }
+
+								// 	}
+								// }
 							});
+
+							var $mep = $clickOverlay.find('[id^="mep"]');
+
+							console.log($video.keyActions);
+
+							$mep.focus();
 						}
 					});
 
