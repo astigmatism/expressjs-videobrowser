@@ -227,7 +227,8 @@ var Application = (function() {
 								videoWidth: frameWidth,
 								videoHeight: frameHeight,
 								hideVideoControlsOnPause: true,
-								startVolume: 0.2
+								startVolume: 0.2,
+								alwaysShowControls: true
 							});
 
 							//$mp.currentTime = ($video.duration * ($framecounter.text().match(/\d*/) * 0.01)); //start the video from the preview
