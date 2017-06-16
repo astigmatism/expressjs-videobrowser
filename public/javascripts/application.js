@@ -164,7 +164,6 @@ var Application = (function() {
 					var maxFrame = (clientdata.framesPerAxis * clientdata.framesPerAxis) - 1;
 					var currentFrame = getRandomInt(0, maxFrame);
 					var paused = false;
-					var currentPrecentagePosition = 50;
 
 					//frame size
 					var frameWidth = width / clientdata.framesPerAxis;
@@ -175,10 +174,13 @@ var Application = (function() {
 						currentFrame = currentFrame + delta;
 						currentFrame = currentFrame > maxFrame ? 0 : currentFrame;
 						currentFrame = currentFrame < 0 ? maxFrame : currentFrame;
+						
+						var percent = (currentFrame / maxFrame);
+						$framecounter.data('percent', percent); //save the preiew thumb percentage to start the video from
 
 						backgroundPosition = getBackgoundPosition(currentFrame, width, height, clientdata.framesPerAxis);
 						$preview.css('background-position', backgroundPosition.x + 'px ' + backgroundPosition.y + 'px');
-						$framecounter.text(Math.round((currentFrame / maxFrame) * 100) + '%');
+						$framecounter.text(Math.round(percent * 100) + '%');
 					};
 
 					$preview.css('height', frameHeight + 'px');
@@ -192,12 +194,12 @@ var Application = (function() {
 					$clickOverlay.click(function(event) {
 						
 						var offset = $(this).offset();
-						var percentageOfWidth = Math.round(((event.pageX - offset.left) / frameWidth) * 100);
+						var percentageOfWidth = (event.pageX - offset.left) / frameWidth;
 
-						if (percentageOfWidth < 25) {
+						if (percentageOfWidth < 0.25) {
 							setBackgroundPosition(-1);
 						}
-						else if (percentageOfWidth > 75) {
+						else if (percentageOfWidth > 0.75) {
 							setBackgroundPosition(1);
 						}
 						else {
@@ -217,10 +219,17 @@ var Application = (function() {
 							//replace preview with video!
 							$clickOverlay.html($video);
 							
-							$video.mediaelementplayer({
+							$mp = $video.mediaelementplayer({
 								videoWidth: frameWidth,
 								videoHeight: frameHeight,
-								hideVideoControlsOnPause: true
+								hideVideoControlsOnPause: true,
+								startVolume: 0.2
+							});
+
+							//$mp.currentTime = ($video.duration * ($framecounter.text().match(/\d*/) * 0.01)); //start the video from the preview
+
+							$video.on('loadedmetadata', function() {
+								this.currentTime = (this.duration * $framecounter.data('percent')); //start the video from the preview
 							});
 
 							var $mep = $clickOverlay.find('[id^="mep"]');
