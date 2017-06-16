@@ -64,10 +64,15 @@ a {
 	background: linear-gradient(180deg, #555 0%, #666 51%, #555 75%);
 }
 
-.video .frame-counter {
+.caption .filename {
+	width: 90%;
+	overflow: hidden;
+}
+
+.caption .frame-counter {
 	position: absolute;
-	top: 0px;
-	left: 0px;
+	bottom: 0px;
+	right: 0px;
 }
 
 .video .caption {

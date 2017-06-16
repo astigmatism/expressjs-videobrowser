@@ -144,13 +144,13 @@ var Application = (function() {
 				var data = clientdata.videos[file];
 				var $gi = $('<div class="grid-item video" />');
 
-				var $framecounter = $('<div class="frame-counter" />');
-				$gi.append($framecounter);
 				var $preview = $('<div class="preview" />');
 				$gi.append($preview);
 				var $clickOverlay = $('<div class="click-overlay" />');
 				$gi.append($clickOverlay);
-				var $caption = $('<div class="caption">' + data.filename + '</div>');
+				var $caption = $('<div class="caption"><span class="filename">' + data.filename + '</span></div>');
+				var $framecounter = $('<span class="frame-counter" />');
+				$caption.append($framecounter);
 				$gi.append($caption);
 				
 				
@@ -212,36 +212,14 @@ var Application = (function() {
 							});
 
 							$clickOverlay.unbind('click touch');
+							$framecounter.hide();
 
 							//replace preview with video!
 							$clickOverlay.html($video);
 							
 							$video.mediaelementplayer({
 								videoWidth: frameWidth,
-								videoHeight: frameHeight,
-								// keyActions: {
-								// 	keys: [38], // UP
-								// 	action: (player, media) => {
-
-								// 		// if (player.container.querySelector(`.${config.classPrefix}volume-button>button`).matches(':focus') ||
-								// 		// 	player.container.querySelector(`.${config.classPrefix}volume-slider`).matches(':focus')) {
-								// 		// 	player.container.querySelector(`.${config.classPrefix}volume-slider`).style.display = '';
-								// 		// }
-								// 		if (player.isVideo) {
-								// 			player.showControls();
-								// 			player.startControlsTimer();
-								// 		}
-
-								// 		media.playbackRate += 0.1;
-
-								// 		// const newVolume = Math.min(media.volume + 0.1, 1);
-								// 		// media.setVolume(newVolume);
-								// 		// if (newVolume > 0) {
-								// 		// 	media.setMuted(false);
-								// 		// }
-
-								// 	}
-								// }
+								videoHeight: frameHeight
 							});
 
 							var $mep = $clickOverlay.find('[id^="mep"]');
