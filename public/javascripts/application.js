@@ -219,12 +219,11 @@ var Application = (function() {
 							
 							$video.mediaelementplayer({
 								videoWidth: frameWidth,
-								videoHeight: frameHeight
+								videoHeight: frameHeight,
+								hideVideoControlsOnPause: true
 							});
 
 							var $mep = $clickOverlay.find('[id^="mep"]');
-
-							console.log($video.keyActions);
 
 							$mep.focus();
 						}
