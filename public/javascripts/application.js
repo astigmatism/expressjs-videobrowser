@@ -19,9 +19,25 @@ var Application = (function() {
 		});
 
 		//title
-		$title.on('click touch', function(event) {
-			window.refresh();
-		});
+		$title.empty();
+		(function(data) {
+
+			var url = data.location.split('/');
+
+			for (var i = 0; i < url.length; ++i) {
+				
+				var link = '/';
+				var name = url[i] !== '' ? url[i] : 'Home';
+
+				for (var j = 1; j < i + 1; ++j) {
+					link += url[j] + '/';
+				}
+				link = link !== '/' ? link.slice(0, -1) : link; //remove last slash
+
+				$title.append('<a href="' +link + '">' + name + '</a>/');
+			}
+
+		})(clientdata);
 
 		//back button
 		$back.on('click touch', function () {
