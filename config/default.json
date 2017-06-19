@@ -3,6 +3,7 @@
 	"thumbRoot": "public/thumbs",
 	"webThumbRoot": "/thumbs",
 	"webMediaRoot": "/media",
+	"previewFilename": ".preview-manifest",
 	"images": {
 		"prefix": "{{i}}",
 		"ext": "png"

@@ -55,6 +55,6 @@ app.use(function(err, req, res, next) {
 //var server = app.listen(app.get('port'));
 //server.timeout = 10800000; //3 hours repsonse timeout
 
-control.onApplicationStart(config.get('mediaRoot'));
+control.OnApplicationStart();
 
 module.exports = app;

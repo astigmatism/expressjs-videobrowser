@@ -4,47 +4,56 @@ const async = require('async');
 const exec = require('child_process').exec;
 const config = require('config');
 const gm = require('gm');
+const folderlisting = require('./folder-listing');
 
 //private
-var thumbFolder = config.get('thumbRoot');
+var thumbRoot = config.get('thumbRoot');
+var mediaRoot = config.get('mediaRoot');
+var previewFilename = config.get('previewFilename');
 var framesPerAxis = parseInt(config.get('framesPerAxis'), 10); //grid will be this value * 2
-var fileKeys = [];
+var working = false;
 
 //public
 exports = module.exports = {
 
-    working: false,
+    IsWorking: function() {
+        return working;
+    },
 
-    start: function (sourceRoot, currentPath, destinationPath, override, callback) {
-
+    Begin: function (currentFolder, override, callback) {
+        
         var that = this;
-        var sourceFolder = path.join(sourceRoot, currentPath);
+        //var currentMediaFolder = path.join(mediaRoot, currentPath);
+        var currentMediaFolder = path.join(mediaRoot, currentFolder);
+        var currentThumbFolder = path.join(thumbRoot, currentFolder);
+
+        working = true;
 
         //get contents of folder to analyze
-        fs.readdir(sourceFolder, (err, items) => {
+        fs.readdir(currentMediaFolder, (err, mediaItems) => {
             if (err) {
                 return callback(err);
             }
 
             //ensure a thumbnail destination exists with the same name
-            fs.ensureDir(destinationPath, err => {
+            fs.ensureDir(currentThumbFolder, err => {
                 if (err) {
                     return callback(err);
                 }
 
                 //if any files already in the destination do not have files in the source, we'll clean them up (deleted)
-                cleanUp(sourceFolder, destinationPath, err => {
+                cleanUp(currentMediaFolder, currentThumbFolder, err => {
 
                     //for each item in folder
-                    async.eachSeries(items, (item, nextitem) => {
+                    async.eachSeries(mediaItems, (mediaItem, nextitem) => {
 
                         //if begins with a dot, we pass (mac) or a @ (linux)
-                        if (item.charAt(0) === '.' || item.charAt(0) === '@') {
+                        if (mediaItem.charAt(0) === '.' || mediaItem.charAt(0) === '@') {
                             return nextitem();
                         }
 
                         //get stats for the source item (file or folder)
-                        fs.stat(path.join(sourceFolder, item), (err, stats) => {
+                        fs.stat(path.join(currentMediaFolder, mediaItem), (err, stats) => {
                             if (err) {
                                 return nextitem(err);
                             }
@@ -52,15 +61,17 @@ exports = module.exports = {
                             //if a folder, recurrsively proceed into it
                             if (stats.isDirectory()) {
 
-                                //define the destination Path
-
-                                that.start(sourceRoot, path.join(currentPath, item), path.join(destinationPath, item), override, err => {
+                                //go into directory
+                                that.Begin(path.join(currentFolder, mediaItem), override, err => {
                                     if (err) {
                                         return nextitem(err);
                                     }
 
                                     //after doing a folder destination, write a manifest file to pull previews from
-                                    that.WriteManifestFile() {
+                                    that.WriteManifestFile(path.join(currentFolder, mediaItem), err => {
+                                        if (err) {
+                                            return nextitem(err);
+                                        }
 
                                         return nextitem();
                                     });
@@ -69,11 +80,11 @@ exports = module.exports = {
                                 return;
                             }
 
-                            var sourceFile = path.join(sourceFolder, item);
+                            var sourceFile = path.join(currentMediaFolder, mediaItem);
 
-                            var fileDetails = exports.ConvertSourceFileNameToThumbFileName(item);
+                            var fileDetails = folderlisting.ConvertSourceFileNameToThumbFileName(mediaItem);
                             
-                            var destinationFile = path.join(destinationPath, fileDetails.thumb);
+                            var destinationFile = path.join(currentThumbFolder, fileDetails.thumb);
 
                             //if destination file exists, do we need to override it?
                             handleDestination(destinationFile, override, (err, perform) => {
@@ -155,6 +166,8 @@ exports = module.exports = {
                         if (err) {
                             return callback(err);
                         }
+
+                        working = false;
                         callback(); //complete!
                     });
                 });
@@ -162,52 +175,96 @@ exports = module.exports = {
         });
     },
 
-    ConvertThumbFileNameToSourceFileName: function(filename) {
+    WriteManifestFile: function(currentFolder, callback) {
 
-        var result = path.basename(filename, path.extname(filename)); //remove extra image extension from thumb
+        FindPreviewImages(currentFolder, function(err, previews) {
+            if (err) {
+                return callback(err);
+            }
 
-        var imageRegex = new RegExp('^(' + config.get('images.prefix') + ').*$');
-        var videoRegex = new RegExp('^(' + config.get('videos.prefix') + ').*$');
-
-        //is an image
-        if (imageRegex.test(result)) {
-            result = result.replace(config.get('images.prefix'), '');
-        }
-
-        //is a video
-        else if (videoRegex.test(result)) {
-            result = result.replace(config.get('videos.prefix'), '');
-        }
-
-        return result;
-    },
-
-    ConvertSourceFileNameToThumbFileName: function(filename) {
-
-        var isImage = new RegExp(config.get('patterns.image'), 'i').test(filename);
-        var isVideo = new RegExp(config.get('patterns.video'), 'i').test(filename);
-        var isAvoid = new RegExp(config.get('patterns.avoid'), 'i').test(filename);
-        
-        var result = {
-            thumb: '',
-            type: ''
-        };
-
-        //destination thumb name can differ depending on how we might detect it browsing
-        
-        if (isImage) {
-            result.type = 'image';
-            result.thumb = config.get('images.prefix') + path.basename(filename) + '.' + config.get('images.ext');
-        } else if (isVideo) {
-            result.type = 'video';
-            result.thumb = config.get('videos.prefix') + path.basename(filename) + '.' + config.get('videos.ext');
-        }
-
-        return result;
+            //write manifest file here
+            fs.outputJson(path.join(thumbRoot, currentFolder, previewFilename), previews, err => {
+                if (err) {
+                    return callback(err);
+                }
+                callback();
+            });
+        });
     }
 };
 
 //private methods
+
+var FindPreviewImages = function(directory, callback) {
+
+    //immidiate and child results 
+    // I do this because in the folder preview I want to show immidiate (files in this folder) stuff as a priority
+    var previews = {
+        immidiate: [],
+        children: []
+    }
+
+    folderlisting.GetFolderListing(directory, (err, listing) => {
+        if (err) {
+            return callback(err);
+        }
+
+        //we want to feature the images and videos from this folder first, so check its contents before heading into its child folders
+
+        //randomize each, yes even folders which we'll search for more previews
+        var imageKeys = Object.keys(listing.images);
+        var videoKeys = Object.keys(listing.videos);
+        var folderKeys = Object.keys(listing.folders);
+
+        //image previews
+        for (var i = 0, len = imageKeys.length; i < len; ++i) {
+            previews.immidiate.push({
+                type: 'image',
+                data: listing.images[imageKeys[i]]
+            })
+        }
+
+        //video previews?
+        for (var i = 0, len = videoKeys.length; i < len; ++i) {
+            previews.immidiate.push({
+                type: 'video',
+                data: listing.videos[videoKeys[i]]
+            });
+        }
+
+        //child folders
+        if (folderKeys.length > 0) {
+
+            //we'll combine all child results and return them
+            var childPreviews = [];
+
+            async.eachSeries(folderKeys, (folderKey, nextitem) => {
+
+                var childFolder = path.join(directory, folderKey);
+                
+                FindPreviewImages(childFolder, (err, folderpreviews) => {
+
+                    childPreviews = childPreviews.concat(folderpreviews.immidiate);
+                    return nextitem();
+                });
+
+            }, err => {
+                if (err) {
+                    return callback(err);
+                }
+
+                previews.children = childPreviews;
+                //previews = previews.slice(0, numberOfImagePreviewsForFolder);
+
+                return callback(null, previews);
+            });
+        }
+        else {
+            //previews = previews.slice(0, numberOfImagePreviewsForFolder); //it can go over when images and video exist without children
+            return callback(null, previews);
+        }
+    });
+};
 
 var convertVideo = function(sourceFile, destinationFile, callback) {
 
@@ -368,7 +425,7 @@ var cleanUp = function(sourceFolder, destinationPath, callback) {
                 if (!stats.isDirectory()) {
 
                     //sanitize the thumb name to match the source name
-                    var sourceFileName = exports.ConvertThumbFileNameToSourceFileName(item);
+                    var sourceFileName = folderlisting.ConvertThumbFileNameToSourceFileName(item);
                     sourceItem = path.join(sourceFolder, sourceFileName);
                 }
 
@@ -399,4 +456,4 @@ var cleanUp = function(sourceFolder, destinationPath, callback) {
             callback(); //complete!
         });
     });
-}; 
+};
