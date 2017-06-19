@@ -42,13 +42,14 @@ exports = module.exports = {
 
                 var manifestPath = path.join(thumbRoot, location, folder, previewFilename);
 
+                listing.folders[folder].preview = [];
+
                 //add preview details
                 fs.readJson(manifestPath, (err, data) => {
                     if (err) {
-                        return nextfolder(err);
+                        //its possible the file doesn't exist yet since its created on its way out from making thumbs.
+                        return nextfolder();
                     }
-
-                    listing.folders[folder].preview = [];
 
                     if (data) {
                         
