@@ -8,6 +8,7 @@ const gm = require('gm');
 //private
 var thumbFolder = config.get('thumbRoot');
 var framesPerAxis = parseInt(config.get('framesPerAxis'), 10); //grid will be this value * 2
+var fileKeys = [];
 
 //public
 exports = module.exports = {
@@ -57,7 +58,13 @@ exports = module.exports = {
                                     if (err) {
                                         return nextitem(err);
                                     }
-                                    return nextitem();
+
+                                    //after doing a folder destination, write a manifest file to pull previews from
+                                    that.WriteManifestFile() {
+
+                                        return nextitem();
+                                    });
+
                                 });
                                 return;
                             }
@@ -73,6 +80,13 @@ exports = module.exports = {
                                 if (err) {
                                     return nextitem(err);
                                 }
+
+                                //file keys
+                                // for (key in FileKeys) {
+
+                                // }
+
+
 
                                 if (perform) {
 
