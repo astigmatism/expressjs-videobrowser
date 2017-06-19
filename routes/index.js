@@ -35,7 +35,10 @@ router.get('*', function(req, res, next) {
 	var path = req.params[0] == '/' ? '' : req.params[0]; //strip out the empty /
 
 	control.ProcessLocation(path, (err, contents) => {
-		
+		if (err) {
+			return res.json(err);
+		}
+
 		res.render('index', { 
 			clientdata: contents
 		});
