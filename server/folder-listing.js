@@ -136,5 +136,35 @@ exports = module.exports = {
         }
 
         return result;
+    },
+
+    GetPreviews: function(manifestPath, callback) {
+
+        //if previews exist
+        fs.exists(manifestPath, (exists) => {
+
+            if (exists) {
+
+                fs.readJson(manifestPath, (err, data) => {
+                    if (err) {
+                        //on error, simply barf out but continue
+                        console.log('GetPreviews failed:', err);
+                        return callback();
+                    }
+
+                    if (Object.keys(data).length > 0) {
+                        
+                        return callback(null, data);
+                    } 
+                    else {
+                        return callback();
+                    }
+                });
+            }
+            else {
+                callback();
+            }
+
+        });
     }
 };

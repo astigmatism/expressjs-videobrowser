@@ -6,6 +6,7 @@ var Application = (function() {
 		var $title = $('.title');
 		var $back = $('.back');
 		var framesPerAxis = clientdata.framesPerAxis; //please mater with server
+		var numberOfImagePreviewsForFolder = 4;
 
 		var Gallery = new vbGallery($('#image-gallery'), $gridwrapper);
 
@@ -63,62 +64,77 @@ var Application = (function() {
 				$grid.append($gi).packery('appended', $gi);
 
 				//image previews for folder
-				if (data.preview.length > 0) {
+				if (folder in clientdata.previews) {
 					
-					//make new preview grid
-					var $innerGrid = $('<div class="preview-grid"></div>');
-					$gi.append($innerGrid);
+					var previews = clientdata.previews[folder];
+					var previewsToShow = [];
 
-					var $previewGrid = $innerGrid.packery({
-						itemSelector: '.preview-grid-item',
-						transitionDuration: 0
-					});
+					//show the immediate first (stuff in this folder)
+					previewsToShow = Shuffle(previews.immediate);
 
-					for (var i = 0; i < data.preview.length; ++i) {
-
-						(function(details) {
-
-							var $previewImageGridItem = $('<div class="preview-grid-item invisible"></div>');
-							var $previewImage = $('<img src="' + details.data.thumb + '" />');
-							
-							$previewImageGridItem.append($previewImage);
-
-							//append to dom here for image to load
-							$previewGrid.append($previewImageGridItem).packery('appended', $previewImageGridItem);
-
-							$previewImageGridItem.imagesLoaded().progress( function() {
-
-								if (details.type === 'video') {
-
-									//let's find a frame
-									var frameWidth = ($previewImage.width() / framesPerAxis);
-									var frameHeight = ($previewImage.height() / framesPerAxis);
-									var x = (frameWidth * getRandomInt(0, framesPerAxis -1));
-									var y = (frameHeight * getRandomInt(0, framesPerAxis -1));
-
-									$previewImageGridItem.addClass('videopreview');
-
-									//let's try and center the frame in the container
-									x += (frameWidth - $previewImageGridItem.width()) * 0.5;
-									y += (frameHeight - $previewImageGridItem.height()) * 0.5;
-
-									$previewImage.css('left', x * -1); //-1 to move image to left
-									$previewImage.css('top', y * -1);
-
-									$previewImageGridItem.removeClass('invisible');
-								}
-
-								else if (details.type === 'image') {
-
-									//scale image to fill container and remove hidden
-									$previewImage.imageScale();
-									$previewImageGridItem.removeClass('invisible');
-								}
-							});
-
-						})(data.preview[i]);
+					if (previewsToShow.length < numberOfImagePreviewsForFolder) {
+						previewsToShow = previewsToShow.concat(Shuffle(previews.children));
 					}
-					$previewGrid.packery();
+					
+					previewsToShow = previewsToShow.slice(0, numberOfImagePreviewsForFolder); //reduce
+
+					if (previewsToShow.length > 0) {
+						
+						//make new preview grid
+						var $innerGrid = $('<div class="preview-grid"></div>');
+						$gi.append($innerGrid);
+
+						var $previewGrid = $innerGrid.packery({
+							itemSelector: '.preview-grid-item',
+							transitionDuration: 0
+						});
+
+						for (var i = 0; i < previewsToShow.length; ++i) {
+
+							(function(details) {
+
+								var $previewImageGridItem = $('<div class="preview-grid-item invisible"></div>');
+								var $previewImage = $('<img src="' + details.data.thumb + '" />');
+								
+								$previewImageGridItem.append($previewImage);
+
+								//append to dom here for image to load
+								$previewGrid.append($previewImageGridItem).packery('appended', $previewImageGridItem);
+
+								$previewImageGridItem.imagesLoaded().progress( function() {
+
+									if (details.type === 'video') {
+
+										//let's find a frame
+										var frameWidth = ($previewImage.width() / framesPerAxis);
+										var frameHeight = ($previewImage.height() / framesPerAxis);
+										var x = (frameWidth * getRandomInt(0, framesPerAxis -1));
+										var y = (frameHeight * getRandomInt(0, framesPerAxis -1));
+
+										$previewImageGridItem.addClass('videopreview');
+
+										//let's try and center the frame in the container
+										x += (frameWidth - $previewImageGridItem.width()) * 0.5;
+										y += (frameHeight - $previewImageGridItem.height()) * 0.5;
+
+										$previewImage.css('left', x * -1); //-1 to move image to left
+										$previewImage.css('top', y * -1);
+
+										$previewImageGridItem.removeClass('invisible');
+									}
+
+									else if (details.type === 'image') {
+
+										//scale image to fill container and remove hidden
+										$previewImage.imageScale();
+										$previewImageGridItem.removeClass('invisible');
+									}
+								});
+
+							})(previewsToShow[i]);
+						}
+						$previewGrid.packery();
+					}
 				}
 
 			})(folder, clientdata);
@@ -290,9 +306,7 @@ var Application = (function() {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	};
 
-	var Gallery = function(images, startAt, slideshowEnabled) {
-		
-		
+	var Shuffle = function(array) {
+		return array.sort( function() { return 0.5 - Math.random() } );
 	}
-
 })();

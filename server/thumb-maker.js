@@ -16,18 +16,19 @@ var working = false;
 //public
 exports = module.exports = {
 
-    IsWorking: function() {
+    IsWorking: function(working) {
+        if (working) {
+            working = working;
+        }
         return working;
     },
 
     Begin: function (currentFolder, override, callback) {
         
         var that = this;
-        //var currentMediaFolder = path.join(mediaRoot, currentPath);
         var currentMediaFolder = path.join(mediaRoot, currentFolder);
         var currentThumbFolder = path.join(thumbRoot, currentFolder);
-
-        working = true;
+        var previews = {};
 
         //get contents of folder to analyze
         fs.readdir(currentMediaFolder, (err, mediaItems) => {
@@ -61,105 +62,110 @@ exports = module.exports = {
                             //if a folder, recurrsively proceed into it
                             if (stats.isDirectory()) {
 
+                                var childFolder = path.join(currentFolder, mediaItem);
+
                                 //go into directory
-                                that.Begin(path.join(currentFolder, mediaItem), override, err => {
+                                that.Begin(childFolder, override, err => {
                                     if (err) {
                                         return nextitem(err);
                                     }
 
-                                    //after doing a folder destination, write a manifest file to pull previews from
-                                    that.WriteManifestFile(path.join(currentFolder, mediaItem), err => {
+                                    //after doing folder, get all previews for it to write to current location when complete
+                                    FindPreviewImages(childFolder, function(err, folderPreviews) {
                                         if (err) {
-                                            return nextitem(err);
+                                            return callback(err);
                                         }
+
+                                        previews[mediaItem] = folderPreviews;
 
                                         return nextitem();
                                     });
-
                                 });
-                                return;
                             }
 
-                            var sourceFile = path.join(currentMediaFolder, mediaItem);
+                            else {
 
-                            var fileDetails = folderlisting.ConvertSourceFileNameToThumbFileName(mediaItem);
-                            
-                            var destinationFile = path.join(currentThumbFolder, fileDetails.thumb);
+                                var sourceFile = path.join(currentMediaFolder, mediaItem);
 
-                            //if destination file exists, do we need to override it?
-                            handleDestination(destinationFile, override, (err, perform) => {
-                                if (err) {
-                                    return nextitem(err);
-                                }
+                                var fileDetails = folderlisting.ConvertSourceFileNameToThumbFileName(mediaItem);
+                                
+                                var destinationFile = path.join(currentThumbFolder, fileDetails.thumb);
 
-                                //file keys
-                                // for (key in FileKeys) {
+                                //if destination file exists, do we need to override it?
+                                handleDestination(destinationFile, override, (err, perform) => {
+                                    if (err) {
+                                        return nextitem(err);
+                                    }
 
-                                // }
+                                    //file keys
+                                    // for (key in FileKeys) {
+
+                                    // }
 
 
 
-                                if (perform) {
+                                    if (perform) {
 
-                                    console.log('------------------------------ ' + fileDetails.type + ' ------------------------------');
-                                    console.log('Source: ' + sourceFile);
-                                    console.log('Destination: ' + destinationFile);
+                                        console.log('------------------------------ ' + fileDetails.type + ' ------------------------------');
+                                        console.log('Source: ' + sourceFile);
+                                        console.log('Destination: ' + destinationFile);
 
-                                    //ok, what type of conversion is this?
+                                        //ok, what type of conversion is this?
 
-                                    if (fileDetails.type == 'video') {
+                                        if (fileDetails.type == 'video') {
 
-                                        //handbrake
-                                        // convertVideo(sourceFile, destinationFile, err => {
-                                        //     if (err) {
-                                        //         console.log(err);
-                                        //     }
-                                        //     return nextitem();
-                                        // });
+                                            //handbrake
+                                            // convertVideo(sourceFile, destinationFile, err => {
+                                            //     if (err) {
+                                            //         console.log(err);
+                                            //     }
+                                            //     return nextitem();
+                                            // });
 
-                                        //ffmpeg
-                                        GetAspectRatio(sourceFile, (err, width, height) => {
-                                            if (err) {
-                                                return callback(err);
-                                            }
+                                            //ffmpeg
+                                            GetAspectRatio(sourceFile, (err, width, height) => {
+                                                if (err) {
+                                                    return callback(err);
+                                                }
 
-                                            var aspectRatio = height / width;
+                                                var aspectRatio = height / width;
 
-                                            GetFrameCount(sourceFile, (err, frameCount) => {
+                                                GetFrameCount(sourceFile, (err, frameCount) => {
 
-                                                //with frame count known, we can extract exactly the number of frames to fit our grid
-                                                var captureEvery = Math.round(frameCount / (framesPerAxis * framesPerAxis));
+                                                    //with frame count known, we can extract exactly the number of frames to fit our grid
+                                                    var captureEvery = Math.round(frameCount / (framesPerAxis * framesPerAxis));
 
-                                                CaptureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
-                                                    if (err) {
-                                                        return callback(err);
-                                                    }
-                                                    nextitem();
+                                                    CaptureFrames(sourceFile, destinationFile, captureEvery, aspectRatio, err => {
+                                                        if (err) {
+                                                            return callback(err);
+                                                        }
+                                                        nextitem();
+                                                    });
+
                                                 });
-
                                             });
-                                        });
-                                    }
-                                    else if (fileDetails.type == 'image') {
+                                        }
+                                        else if (fileDetails.type == 'image') {
 
-                                        gm(sourceFile).resize(320).setFormat(config.get('images.ext')).quality(100).write(destinationFile, err => {
-                                            if (err) {
-                                                console.log(err);
-                                            }
+                                            gm(sourceFile).resize(320).setFormat(config.get('images.ext')).quality(100).write(destinationFile, err => {
+                                                if (err) {
+                                                    console.log(err);
+                                                }
+                                                return nextitem();
+                                            });
+                                        }
+
+                                        else {
+                                            console.log('We dont know what to do with this file type: ' + item);
                                             return nextitem();
-                                        });
+                                        }
                                     }
-
                                     else {
-                                        console.log('We dont know what to do with this file type: ' + item);
+                                        console.log('Already complete: ' + sourceFile);
                                         return nextitem();
                                     }
-                                }
-                                else {
-                                    console.log('Already complete: ' + sourceFile);
-                                    return nextitem();
-                                }
-                            });
+                                });
+                            }
                         });
 
                     }, err => {
@@ -167,27 +173,15 @@ exports = module.exports = {
                             return callback(err);
                         }
 
-                        working = false;
-                        callback(); //complete!
+                        //write manifest file here
+                        fs.outputJson(path.join(currentThumbFolder, previewFilename), previews, err => {
+                            if (err) {
+                                return callback(err);
+                            }
+                            callback();
+                        });
                     });
                 });
-            });
-        });
-    },
-
-    WriteManifestFile: function(currentFolder, callback) {
-
-        FindPreviewImages(currentFolder, function(err, previews) {
-            if (err) {
-                return callback(err);
-            }
-
-            //write manifest file here
-            fs.outputJson(path.join(thumbRoot, currentFolder, previewFilename), previews, err => {
-                if (err) {
-                    return callback(err);
-                }
-                callback();
             });
         });
     }
@@ -197,10 +191,10 @@ exports = module.exports = {
 
 var FindPreviewImages = function(directory, callback) {
 
-    //immidiate and child results 
-    // I do this because in the folder preview I want to show immidiate (files in this folder) stuff as a priority
+    //immediate and child results 
+    // I do this because in the folder preview I want to show immediate (files in this folder) stuff as a priority
     var previews = {
-        immidiate: [],
+        immediate: [],
         children: []
     }
 
@@ -218,7 +212,7 @@ var FindPreviewImages = function(directory, callback) {
 
         //image previews
         for (var i = 0, len = imageKeys.length; i < len; ++i) {
-            previews.immidiate.push({
+            previews.immediate.push({
                 type: 'image',
                 data: listing.images[imageKeys[i]]
             })
@@ -226,7 +220,7 @@ var FindPreviewImages = function(directory, callback) {
 
         //video previews?
         for (var i = 0, len = videoKeys.length; i < len; ++i) {
-            previews.immidiate.push({
+            previews.immediate.push({
                 type: 'video',
                 data: listing.videos[videoKeys[i]]
             });
@@ -241,10 +235,12 @@ var FindPreviewImages = function(directory, callback) {
             async.eachSeries(folderKeys, (folderKey, nextitem) => {
 
                 var childFolder = path.join(directory, folderKey);
-                
+
                 FindPreviewImages(childFolder, (err, folderpreviews) => {
 
-                    childPreviews = childPreviews.concat(folderpreviews.immidiate);
+                    //the children previews are its immeidate, and the children's children
+                    childPreviews = childPreviews.concat(folderpreviews.immediate);
+                    childPreviews = childPreviews.concat(folderpreviews.children);
                     return nextitem();
                 });
 
@@ -254,13 +250,10 @@ var FindPreviewImages = function(directory, callback) {
                 }
 
                 previews.children = childPreviews;
-                //previews = previews.slice(0, numberOfImagePreviewsForFolder);
-
                 return callback(null, previews);
             });
         }
         else {
-            //previews = previews.slice(0, numberOfImagePreviewsForFolder); //it can go over when images and video exist without children
             return callback(null, previews);
         }
     });
