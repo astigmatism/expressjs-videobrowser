@@ -3,6 +3,7 @@ const watch = require('watch');
 const path = require('path');
 const async = require('async');
 const thumbmaker = require('./thumb-maker');
+const videoconversion = require('./video-conversion');
 const folderlisting = require('./folder-listing');
 const config = require('config');
 
@@ -21,11 +22,11 @@ exports = module.exports = {
         watch.watchTree(mediaRoot, {
 
             ignoreDotFiles: true,
-            interval: 5
+            interval: 10
 
         }, (f, cur, prev) => {
 
-            MakeThumbnails(mediaRoot);
+            Begin(mediaRoot);
         });
     },
 
@@ -59,24 +60,40 @@ exports = module.exports = {
 
 //private
 
-var MakeThumbnails = function() {
+var Begin = function() {
 
-    if (!thumbmaker.IsWorking()) {
+    if (!thumbmaker.IsWorking() && !videoconversion.IsWorking()) {
         
-        console.log('Thumb Maker task starting...');
+        console.log('Ensuring all videos are converted...');
+        
+        videoconversion.IsWorking(true);
 
-        thumbmaker.IsWorking(true);
+        videoconversion.Begin('', (err, data) => {
 
-        thumbmaker.Begin('', false, (err, data) => {
             if (err) {
                 console.log(err);
             }
-            console.log('Thumb Maker task complete.');
+            console.log('Video Conversion task complete.');
             
-            thumbmaker.IsWorking(false);
+            videoconversion.IsWorking(false);
+
+            //thumbs
+
+            console.log('Thumb Maker task starting...');
+
+            thumbmaker.IsWorking(true);
+
+            thumbmaker.Begin('', false, (err, data) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log('Thumb Maker task complete.');
+                
+                thumbmaker.IsWorking(false);
+            });
         });
     }
     else {
-        console.log('Thumb Maker task alreday working...');
+        console.log('Thumb Maker task or Video Conversion alreday working...');
     }
 };

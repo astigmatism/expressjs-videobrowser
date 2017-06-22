@@ -20,5 +20,6 @@
 	"videoThumbSize": {
 		"width": 300
 	},
-	"framesPerAxis": 5
+	"framesPerAxis": 5,
+	"handbrakecli": "--encoder x264 -q20 --two-pass --optimize"
 }
