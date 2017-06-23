@@ -7,17 +7,11 @@ const folderlisting = require('./folder-listing');
 
 //private
 var mediaRoot = config.get('mediaRoot');
-var working = false;
 
 //public
 exports = module.exports = {
 
-    IsWorking: function(working) {
-        if (working) {
-            working = working;
-        }
-        return working;
-    },
+    working: false,
 
     Begin: function (currentFolder, callback) {
         
@@ -71,12 +65,11 @@ exports = module.exports = {
                                 if (err) {
                                     return nextitem(err);
                                 }
-
                                 nextitem();
                             });
                         }
                         else {
-                            console.log('We dont convert this file type: ' + item);
+                            console.log('We dont convert this file type: ' + mediaItem);
                             return nextitem();
                         }
                     }
@@ -114,12 +107,19 @@ var ConvertVideo = function(sourceFile, callback) {
                 return callback(err);
             }
 
-            console.log('Coverting video complete: ' + destinationFile);
+            console.log('Deleting original source: ' + sourceFile);
 
-            callback(destinationMediaPath);
+            fs.remove(sourceFile, err => {
+                if (err) {
+                    return callback(err);
+                }
+                console.log('Coverting video complete: ' + destinationMediaPath);
+
+                callback(null, destinationMediaPath);
+            });
         });
     } 
     else {
-        callback(sourceFile);
+        callback(null, sourceFile);
     }
 };

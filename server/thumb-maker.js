@@ -11,17 +11,11 @@ var thumbRoot = config.get('thumbRoot');
 var mediaRoot = config.get('mediaRoot');
 var previewFilename = config.get('previewFilename');
 var framesPerAxis = parseInt(config.get('framesPerAxis'), 10); //grid will be this value * 2
-var working = false;
 
 //public
 exports = module.exports = {
 
-    IsWorking: function(working) {
-        if (working) {
-            working = working;
-        }
-        return working;
-    },
+    working: false,
 
     Begin: function (currentFolder, override, callback) {
         

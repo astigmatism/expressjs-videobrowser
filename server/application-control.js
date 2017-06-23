@@ -62,11 +62,11 @@ exports = module.exports = {
 
 var Begin = function() {
 
-    if (!thumbmaker.IsWorking() && !videoconversion.IsWorking()) {
+    if (!thumbmaker.working && !videoconversion.working) {
         
         console.log('Ensuring all videos are converted...');
         
-        videoconversion.IsWorking(true);
+        videoconversion.working = true;
 
         videoconversion.Begin('', (err, data) => {
 
@@ -75,13 +75,13 @@ var Begin = function() {
             }
             console.log('Video Conversion task complete.');
             
-            videoconversion.IsWorking(false);
+            videoconversion.working = false;
 
             //thumbs
 
             console.log('Thumb Maker task starting...');
 
-            thumbmaker.IsWorking(true);
+            thumbmaker.working = true;
 
             thumbmaker.Begin('', false, (err, data) => {
                 if (err) {
@@ -89,7 +89,7 @@ var Begin = function() {
                 }
                 console.log('Thumb Maker task complete.');
                 
-                thumbmaker.IsWorking(false);
+                thumbmaker.working = false;
             });
         });
     }
